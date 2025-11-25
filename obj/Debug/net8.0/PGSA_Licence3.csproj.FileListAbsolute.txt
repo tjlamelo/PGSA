@@ -30,3 +30,4 @@ D:\DEV_TJ\Projet\Host\L3Projet\PGSA_Licence3\obj\Debug\net8.0\refint\PGSA_Licenc
 D:\DEV_TJ\Projet\Host\L3Projet\PGSA_Licence3\obj\Debug\net8.0\PGSA_Licence3.pdb
 D:\DEV_TJ\Projet\Host\L3Projet\PGSA_Licence3\obj\Debug\net8.0\PGSA_Licence3.genruntimeconfig.cache
 D:\DEV_TJ\Projet\Host\L3Projet\PGSA_Licence3\obj\Debug\net8.0\ref\PGSA_Licence3.dll
+D:\DEV_TJ\Projet\Host\L3Projet\PGSA_Licence3\obj\Debug\net8.0\PGSA_Licence3.sourcelink.json
