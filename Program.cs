@@ -5,16 +5,16 @@ var builder = WebApplication.CreateBuilder(args);
 
 // 🔹 Ajouter le DbContext avec MySQL
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
-// Add services to the container.
-builder.Services.AddControllersWithViews();
+// 🔹 Ajouter les controllers avec Razor Runtime Compilation
+builder.Services.AddControllersWithViews()
+       .AddRazorRuntimeCompilation();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Configure the HTTP request pipeline
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -25,9 +25,12 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
-
 app.UseAuthorization();
 
+// Active les routes via les attributs [Route]
+app.MapControllers();
+
+// Route par défaut
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
