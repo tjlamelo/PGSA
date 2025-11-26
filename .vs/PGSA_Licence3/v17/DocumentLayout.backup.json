@@ -1,12 +1,88 @@
 {
   "Version": 1,
   "WorkspaceRootPath": "D:\\DEV_TJ\\Projet\\Host\\L3Projet\\PGSA_Licence3\\",
-  "Documents": [],
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{99B59547-DE3B-4FF6-8AE3-3801DBBBC751}|PGSA_Licence3.csproj|d:\\dev_tj\\projet\\host\\l3projet\\pgsa_licence3\\models\\cours.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{99B59547-DE3B-4FF6-8AE3-3801DBBBC751}|PGSA_Licence3.csproj|solutionrelative:models\\cours.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{99B59547-DE3B-4FF6-8AE3-3801DBBBC751}|PGSA_Licence3.csproj|d:\\dev_tj\\projet\\host\\l3projet\\pgsa_licence3\\models\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{99B59547-DE3B-4FF6-8AE3-3801DBBBC751}|PGSA_Licence3.csproj|solutionrelative:models\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{99B59547-DE3B-4FF6-8AE3-3801DBBBC751}|PGSA_Licence3.csproj|d:\\dev_tj\\projet\\host\\l3projet\\pgsa_licence3\\models\\errorviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{99B59547-DE3B-4FF6-8AE3-3801DBBBC751}|PGSA_Licence3.csproj|solutionrelative:models\\errorviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{99B59547-DE3B-4FF6-8AE3-3801DBBBC751}|PGSA_Licence3.csproj|d:\\dev_tj\\projet\\host\\l3projet\\pgsa_licence3\\controllers\\auth\\logincontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{99B59547-DE3B-4FF6-8AE3-3801DBBBC751}|PGSA_Licence3.csproj|solutionrelative:controllers\\auth\\logincontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
       "VerticalTabListWidth": 256,
-      "DocumentGroups": []
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Cours.cs",
+              "DocumentMoniker": "D:\\DEV_TJ\\Projet\\Host\\L3Projet\\PGSA_Licence3\\Models\\Cours.cs",
+              "RelativeDocumentMoniker": "Models\\Cours.cs",
+              "ToolTip": "D:\\DEV_TJ\\Projet\\Host\\L3Projet\\PGSA_Licence3\\Models\\Cours.cs",
+              "RelativeToolTip": "Models\\Cours.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-25T04:51:00.65Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "User.cs",
+              "DocumentMoniker": "D:\\DEV_TJ\\Projet\\Host\\L3Projet\\PGSA_Licence3\\Models\\User.cs",
+              "RelativeDocumentMoniker": "Models\\User.cs",
+              "ToolTip": "D:\\DEV_TJ\\Projet\\Host\\L3Projet\\PGSA_Licence3\\Models\\User.cs",
+              "RelativeToolTip": "Models\\User.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-25T04:49:44.207Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "ErrorViewModel.cs",
+              "DocumentMoniker": "D:\\DEV_TJ\\Projet\\Host\\L3Projet\\PGSA_Licence3\\Models\\ErrorViewModel.cs",
+              "RelativeDocumentMoniker": "Models\\ErrorViewModel.cs",
+              "ToolTip": "D:\\DEV_TJ\\Projet\\Host\\L3Projet\\PGSA_Licence3\\Models\\ErrorViewModel.cs",
+              "RelativeToolTip": "Models\\ErrorViewModel.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-25T04:46:08.951Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "LoginController.cs",
+              "DocumentMoniker": "D:\\DEV_TJ\\Projet\\Host\\L3Projet\\PGSA_Licence3\\Controllers\\Auth\\LoginController.cs",
+              "RelativeDocumentMoniker": "Controllers\\Auth\\LoginController.cs",
+              "ToolTip": "D:\\DEV_TJ\\Projet\\Host\\L3Projet\\PGSA_Licence3\\Controllers\\Auth\\LoginController.cs",
+              "RelativeToolTip": "Controllers\\Auth\\LoginController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-25T04:44:18.228Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
     }
   ]
 }

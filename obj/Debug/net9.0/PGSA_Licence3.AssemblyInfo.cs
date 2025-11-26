@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("PGSA_Licence3")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b2b3b7d32b92b9d036dfb392b4b7aeea455dfd7b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+cb1eee1ed7b0930cc1c7abce12d606f02b3765b1")]
 [assembly: System.Reflection.AssemblyProductAttribute("PGSA_Licence3")]
 [assembly: System.Reflection.AssemblyTitleAttribute("PGSA_Licence3")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

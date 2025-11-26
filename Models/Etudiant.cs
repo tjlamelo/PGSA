@@ -7,6 +7,9 @@ namespace PGSA_Licence3.Models
 {
     public class Etudiant : User
     {
+   
+
+
         [Required]
         [MaxLength(100)]
         public required string Nom { get; set; }

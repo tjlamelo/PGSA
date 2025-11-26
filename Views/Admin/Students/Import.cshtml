@@ -1,0 +1,41 @@
+@{
+    ViewData["Title"] = "Importer des étudiants";
+    Layout = "_AdminLayout"; // ton layout existant
+}
+
+<div class="container mt-4">
+    <h2>@ViewData["Title"]</h2>
+
+    <form asp-action="Import" method="post" enctype="multipart/form-data">
+        <div class="mb-3">
+            <input type="file" name="file" accept=".xlsx,.xls" class="form-control"/>
+        </div>
+        <button type="submit" class="btn btn-primary">Importer</button>
+    </form>
+
+    <div id="import-result"></div>
+</div>
+
+@section Scripts {
+    <script>
+        const form = document.querySelector('form');
+        const resultDiv = document.getElementById('import-result');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(form);
+
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                resultDiv.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            } else {
+                resultDiv.innerHTML = '<div class="alert alert-danger">Erreur lors de l\'import.</div>';
+            }
+        });
+    </script>
+}
