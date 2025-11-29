@@ -1,11 +1,12 @@
-# Fichiers binaires et objets
+# Binaries / objets
 bin/
 obj/
 
 # Visual Studio
 .vs/
-*.user
 *.suo
+*.user
+*.userprefs
 *.vcxproj.user
 *.ncb
 *.sdf
@@ -13,25 +14,19 @@ obj/
 *.log
 *.dbmdl
 
-# Fichiers générés par l'IDE
+# IDE temp
 *.ide.*
 *.DS_Store
 
-# Packages NuGet
+# NuGet
 *.nupkg
-# Répertoire des packages restaurés
 packages/
-# Si tu utilises le cache global NuGet
 %UserProfile%\.nuget\packages/
 
-# Fichiers de publication / déploiement
+# Déploiement
 *.publishsettings
 *.pubxml
 *.publishproj
-
-# Configurations sensibles
-appsettings*.json
-secrets.json
 
 # ASP.NET temporary files
 wwwroot/lib/
@@ -39,11 +34,19 @@ node_modules/
 npm-debug.log
 yarn-error.log
 
-# Autres
+# Tests / coverage
+*.coverage
+*.coveragexml
+TestResults/
+
+# OS files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Autres temporaires
 *.psess
 *.vsp
 *.pdb
 *.cachefile
 *.pidb
-*.suo
-*.userprefs
