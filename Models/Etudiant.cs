@@ -31,6 +31,9 @@ namespace PGSA_Licence3.Models
         [Required]
         [MaxLength(50)]
         public required string Filiere { get; set; } 
+        [Required]
+        [MaxLength(50)]
+        public required string Specialite { get; set; } 
 
         [MaxLength(100)]
         public string? EmailInstitutionnel { get; set; }  

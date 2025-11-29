@@ -27,6 +27,8 @@
             --info: #39afd1;
             --warning: #f6c343;
             --danger: #e63757;
+            --sidebar-width: 260px;
+            --sidebar-collapsed-width: 70px;
         }
         
         * {
@@ -44,7 +46,7 @@
         
         /* Sidebar */
         .sidebar {
-            width: 260px;
+            width: var(--sidebar-width);
             height: 100vh;
             position: fixed;
             top: 0;
@@ -55,18 +57,51 @@
             z-index: 1000;
             box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
+            overflow-y: auto;
+        }
+        
+        .sidebar.collapsed {
+            width: var(--sidebar-collapsed-width);
         }
         
         .sidebar-header {
             padding: 0 20px 30px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .sidebar.collapsed .sidebar-header {
+            padding: 0 15px 30px;
         }
         
         .sidebar-header h5 {
             font-weight: 700;
             letter-spacing: 0.5px;
             font-size: 1.1rem;
+            transition: opacity 0.3s;
+        }
+        
+        .sidebar.collapsed .sidebar-header h5 {
+            opacity: 0;
+            visibility: hidden;
+        }
+        
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 4px;
+            transition: background 0.3s;
+        }
+        
+        .sidebar-toggle:hover {
+            background: rgba(255, 255, 255, 0.1);
         }
         
         .sidebar-menu {
@@ -76,6 +111,7 @@
         
         .sidebar-menu li {
             margin-bottom: 5px;
+            position: relative;
         }
         
         .sidebar-menu a {
@@ -88,6 +124,12 @@
             font-weight: 500;
             transition: all 0.3s ease;
             border-left: 3px solid transparent;
+            position: relative;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a {
+            padding: 14px 15px;
+            justify-content: center;
         }
         
         .sidebar-menu a:hover, .sidebar-menu a.active {
@@ -99,15 +141,70 @@
         .sidebar-menu i {
             margin-right: 12px;
             font-size: 18px;
+            transition: margin 0.3s;
+        }
+        
+        .sidebar.collapsed .sidebar-menu i {
+            margin-right: 0;
+        }
+        
+        .sidebar-menu .menu-text {
+            transition: opacity 0.3s;
+        }
+        
+        .sidebar.collapsed .sidebar-menu .menu-text {
+            opacity: 0;
+            visibility: hidden;
+            position: absolute;
+            left: calc(var(--sidebar-collapsed-width) + 10px);
+            background: var(--primary);
+            padding: 8px 12px;
+            border-radius: 4px;
+            white-space: nowrap;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 10;
+        }
+        
+        .sidebar.collapsed .sidebar-menu li:hover .menu-text {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        /* Tooltip pour sidebar repliée */
+        .sidebar-menu a::before {
+            content: attr(data-tooltip);
+            position: absolute;
+            left: calc(var(--sidebar-collapsed-width) + 10px);
+            background: var(--primary);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            white-space: nowrap;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+            z-index: 10;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a:hover::before {
+            opacity: 1;
+            visibility: visible;
         }
         
         /* Content */
         .content {
-            margin-left: 260px;
+            margin-left: var(--sidebar-width);
             padding: 30px;
             margin-top: 70px;
             min-height: 100vh;
             transition: all 0.3s ease;
+        }
+        
+        .content.expanded {
+            margin-left: var(--sidebar-collapsed-width);
         }
         
         /* Top Navbar */
@@ -118,15 +215,21 @@
             position: fixed;
             top: 0;
             right: 0;
-            left: 260px;
+            left: var(--sidebar-width);
             z-index: 999;
             transition: all 0.3s ease;
+        }
+        
+        .navbar-custom.expanded {
+            left: var(--sidebar-collapsed-width);
         }
         
         .navbar-brand {
             color: var(--primary) !important;
             font-weight: 700;
             font-size: 1.3rem;
+            display: flex;
+            align-items: center;
         }
         
         .nav-link {
@@ -134,6 +237,11 @@
             font-weight: 500;
             display: flex;
             align-items: center;
+            transition: color 0.3s;
+        }
+        
+        .nav-link:hover {
+            color: var(--accent) !important;
         }
         
         .nav-link i {
@@ -151,6 +259,7 @@
             border-radius: 50%;
             margin-right: 10px;
             border: 2px solid var(--light);
+            object-fit: cover;
         }
         
         .dropdown-menu {
@@ -164,6 +273,14 @@
             padding: 10px 20px;
             font-weight: 500;
             color: var(--dark);
+            display: flex;
+            align-items: center;
+            transition: all 0.3s;
+        }
+        
+        .dropdown-item i {
+            margin-right: 10px;
+            color: var(--primary);
         }
         
         .dropdown-item:hover {
@@ -171,13 +288,34 @@
             color: var(--accent);
         }
         
+        /* Bouton toggle pour mobile */
+        .mobile-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--primary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 5px;
+            margin-right: 15px;
+        }
+        
         /* Responsive */
-        @* @media (max-width: 992px) {
+        @@media (max-width: 992px) {
             .sidebar {
-                left: -260px;
+                left: calc(-1 * var(--sidebar-width));
             }
             
             .sidebar.active {
+                left: 0;
+            }
+            
+            .sidebar.collapsed {
+                width: var(--sidebar-width);
+                left: calc(-1 * var(--sidebar-width));
+            }
+            
+            .sidebar.collapsed.active {
                 left: 0;
             }
             
@@ -189,17 +327,47 @@
             .navbar-custom {
                 padding-left: 20px;
             }
-        } *@
+            
+            .mobile-toggle {
+                display: block;
+            }
+            
+            .sidebar-menu .menu-text {
+                display: none;
+            }
+            
+            .sidebar-menu a::before {
+                display: none;
+            }
+        }
         
         /* Animations */
         .fade-in {
             animation: fadeIn 0.5s ease-in-out;
         }
         
-        @* @keyframes fadeIn {
+        @@keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
-        } *@
+        }
+        
+        /* Scrollbar personnalisée */
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .sidebar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+        
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
     </style>
 </head>
 
@@ -207,11 +375,15 @@
 
     <!-- NAVBAR -->
     <nav class="navbar navbar-expand-lg navbar-custom fixed-top">
+        <button class="mobile-toggle" id="mobileSidebarToggle">
+            <i class="bi bi-list"></i>
+        </button>
+        
         <a class="navbar-brand d-flex align-items-center" href="#">
             <i class="bi bi-speedometer2 me-2"></i> Admin Dashboard
         </a>
 
-        <button class="navbar-toggler border-0" type="button" id="sidebarToggle">
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarAdmin">
             <span class="navbar-toggler-icon"></span>
         </button>
 
@@ -230,9 +402,9 @@
                         </div>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="/Account/Profile"><i class="bi bi-person me-2"></i> Mon profil</a></li>
+                        <li><a class="dropdown-item" href="/Account/Profile"><i class="bi bi-person"></i> Mon profil</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="/Account/Logout"><i class="bi bi-box-arrow-right me-2"></i> Déconnexion</a></li>
+                        <li><a class="dropdown-item" href="/Account/Logout"><i class="bi bi-box-arrow-right"></i> Déconnexion</a></li>
                     </ul>
                 </li>
             </ul>
@@ -243,20 +415,53 @@
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <h5><i class="bi bi-grid-3x3-gap-fill me-2"></i> MENU ADMIN</h5>
+            <button class="sidebar-toggle" id="desktopSidebarToggle">
+                <i class="bi bi-chevron-left"></i>
+            </button>
         </div>
         
         <ul class="sidebar-menu">
-            <li><a href="/Admin" class="active"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
-            <li><a href="/Users"><i class="bi bi-people"></i> Gestion utilisateurs</a></li>
-            <li><a href="/Roles"><i class="bi bi-shield-check"></i> Gestion des rôles</a></li>
-            <li><a href="/Products"><i class="bi bi-box-seam"></i> Produits</a></li>
-            <li><a href="/Orders"><i class="bi bi-cart-check"></i> Commandes</a></li>
-            <li><a href="/Settings"><i class="bi bi-gear"></i> Paramètres</a></li>
+            <li>
+                <a href="/Admin" class="active" data-tooltip="Dashboard">
+                    <i class="bi bi-speedometer2"></i>
+                    <span class="menu-text">Dashboard</span>
+                </a>
+            </li>
+            <li>
+                <a href="/Users" data-tooltip="Gestion utilisateurs">
+                    <i class="bi bi-people"></i>
+                    <span class="menu-text">Gestion utilisateurs</span>
+                </a>
+            </li>
+            <li>
+                <a href="/Roles" data-tooltip="Gestion des rôles">
+                    <i class="bi bi-shield-check"></i>
+                    <span class="menu-text">Gestion des rôles</span>
+                </a>
+            </li>
+            <li>
+                <a href="/Products" data-tooltip="Produits">
+                    <i class="bi bi-box-seam"></i>
+                    <span class="menu-text">Produits</span>
+                </a>
+            </li>
+            <li>
+                <a href="/Orders" data-tooltip="Commandes">
+                    <i class="bi bi-cart-check"></i>
+                    <span class="menu-text">Commandes</span>
+                </a>
+            </li>
+            <li>
+                <a href="/Settings" data-tooltip="Paramètres">
+                    <i class="bi bi-gear"></i>
+                    <span class="menu-text">Paramètres</span>
+                </a>
+            </li>
         </ul>
     </div>
 
     <!-- CONTENU -->
-    <div class="content">
+    <div class="content" id="content">
         @RenderBody()
     </div>
 
@@ -264,20 +469,61 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Toggle sidebar
-            const sidebarToggle = document.getElementById('sidebarToggle');
             const sidebar = document.getElementById('sidebar');
+            const content = document.getElementById('content');
+            const navbar = document.querySelector('.navbar-custom');
+            const desktopSidebarToggle = document.getElementById('desktopSidebarToggle');
+            const mobileSidebarToggle = document.getElementById('mobileSidebarToggle');
+            const desktopToggleIcon = desktopSidebarToggle.querySelector('i');
             
-            sidebarToggle.addEventListener('click', function() {
+            // Toggle sidebar pour desktop
+            desktopSidebarToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('collapsed');
+                content.classList.toggle('expanded');
+                navbar.classList.toggle('expanded');
+                
+                // Changer l'icône du bouton
+                if (sidebar.classList.contains('collapsed')) {
+                    desktopToggleIcon.classList.remove('bi-chevron-left');
+                    desktopToggleIcon.classList.add('bi-chevron-right');
+                } else {
+                    desktopToggleIcon.classList.remove('bi-chevron-right');
+                    desktopToggleIcon.classList.add('bi-chevron-left');
+                }
+            });
+            
+            // Toggle sidebar pour mobile
+            mobileSidebarToggle.addEventListener('click', function() {
                 sidebar.classList.toggle('active');
             });
             
-            // Close sidebar when clicking outside on mobile
+            // Fermer la sidebar en cliquant à l'extérieur sur mobile
             document.addEventListener('click', function(event) {
                 if (window.innerWidth <= 992) {
-                    if (!sidebar.contains(event.target) && !sidebarToggle.contains(event.target)) {
+                    if (!sidebar.contains(event.target) && 
+                        !mobileSidebarToggle.contains(event.target) && 
+                        sidebar.classList.contains('active')) {
                         sidebar.classList.remove('active');
                     }
+                }
+            });
+            
+            // Gérer le redimensionnement de la fenêtre
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 992) {
+                    sidebar.classList.remove('active');
+                }
+            });
+            
+            // Activer le lien de menu actif
+            const currentLocation = window.location.pathname;
+            const menuLinks = document.querySelectorAll('.sidebar-menu a');
+            
+            menuLinks.forEach(link => {
+                if (link.getAttribute('href') === currentLocation) {
+                    link.classList.add('active');
+                } else {
+                    link.classList.remove('active');
                 }
             });
         });

@@ -1,24 +1,26 @@
 using Microsoft.AspNetCore.Mvc;
 using PGSA_Licence3.Services.Students;
+using PGSA_Licence3.Models;
+using PGSA_Licence3.Data; // pour ApplicationDbContext
 
 namespace PGSA_Licence3.Controllers.Admin.Students
-
 {
     public class StudentsController : Controller
     {
         private readonly StudentImportService _importService;
+        private readonly SaveImportedStudentsService _saveService;
 
-        public StudentsController()
+        public StudentsController(ApplicationDbContext db)
         {
             _importService = new StudentImportService();
+            _saveService = new SaveImportedStudentsService(db);
         }
 
         // GET : /Students/Import
         [HttpGet]
         public IActionResult Import()
         {
-         return View("~/Views/Admin/Students/Import.cshtml");
-
+            return View("~/Views/Admin/Students/Import.cshtml");
         }
 
         // POST : /Students/Import
@@ -29,9 +31,57 @@ namespace PGSA_Licence3.Controllers.Admin.Students
                 return BadRequest("Veuillez fournir un fichier Excel.");
 
             using var stream = file.OpenReadStream();
-            var students = _importService.ImportExcel(stream);
 
-            return Json(students);
+            var rows = _importService.ImportExcel(stream);
+
+            var etudiants = rows
+                .Select(row => _importService.ToEtudiant(row))
+                .ToList();
+
+            return Json(etudiants);
         }
+
+        // POST : /Students/Save
+        [HttpPost]
+   
+public async Task<IActionResult> Save([FromBody] SaveStudentsRequest request)
+{
+    if (request.Students == null || request.Students.Count == 0)
+        return BadRequest("Aucun étudiant à enregistrer.");
+
+    try
+    {
+        var results = await _saveService.SaveWithConflictsAsync(request.Students, request.OverwriteExisting);
+
+        var savedCount = results.Count(r => r.Saved);
+        var conflicts = results.Where(r => !r.Saved).Select(r => new
+        {
+            r.Student.Matricule,
+            r.Student.Username,
+            r.Student.Email,
+            r.Problem
+        }).ToList();
+
+        return Ok(new
+        {
+            message = $"Import terminé. {savedCount} étudiant(s) enregistré(s).",
+            totalSaved = savedCount,
+            conflicts
+        });
+    }
+    catch (Exception ex)
+    {
+        // Retourne l'exception en JSON pour debug
+        return StatusCode(500, new { error = ex.Message, stack = ex.StackTrace });
+    }
+}
+
+
+        public class SaveStudentsRequest
+        {
+            public List<Etudiant> Students { get; set; } = new();
+            public bool OverwriteExisting { get; set; } = false;
+        }
+
     }
 }

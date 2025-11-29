@@ -1,8 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
+using System.Linq;
 using OfficeOpenXml;
 using PGSA_Licence3.Models;
+using System.Text;
+
 
 namespace PGSA_Licence3.Services.Students
 {
@@ -10,66 +14,94 @@ namespace PGSA_Licence3.Services.Students
     {
         public StudentImportService()
         {
-            // Configure la licence EPPlus 8.x
             ExcelPackage.License.SetNonCommercialPersonal("TJBeats");
         }
 
-        /// <summary>
-        /// Importe le fichier Excel et retourne une liste de dictionnaires pour test.
-        /// </summary>
+        /// Normalise un texte (minuscules, supprime accents)
+        private string Normalize(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text)) return "";
+            text = text.ToLower().Trim();
+            return string.Concat(text.Normalize(NormalizationForm.FormD)
+                .Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark))
+                .Replace(" ", "-");
+        }
+
+        /// Génère matricule automatique si vide
+        private string GenerateMatricule(DateTime inscription, string niveau, string filiere)
+        {
+            string yearStart = inscription.Year.ToString().Substring(2);
+            string yearEnd = (inscription.Year + 1).ToString().Substring(2);
+
+            string niveauLetter = !string.IsNullOrWhiteSpace(niveau) ? niveau[0].ToString().ToUpper() : "X";
+            string filiereLetter = !string.IsNullOrWhiteSpace(filiere) ? filiere[0].ToString().ToUpper() : "X";
+
+            string random = new Random().Next(1000, 9999).ToString();
+
+            return $"{yearStart}{yearEnd}{niveauLetter}{filiereLetter}{random}";
+        }
+
+    
+        /// Lit Excel et ignore les lignes vides
         public List<Dictionary<string, string>> ImportExcel(Stream fileStream)
         {
             var result = new List<Dictionary<string, string>>();
 
             using var package = new ExcelPackage(fileStream);
             var ws = package.Workbook.Worksheets[0];
-
             int rowCount = ws.Dimension.End.Row;
 
-            // Colonnes fixes : B = Matricule, C = Noms et Prénoms
             for (int row = 2; row <= rowCount; row++)
             {
                 var matricule = ws.Cells[row, 2].Text.Trim();
                 var nomsPrenoms = ws.Cells[row, 3].Text.Trim();
+                var telephone = ws.Cells[row, 4].Text.Trim();
+                var dateInscription = ws.Cells[row, 5].Text.Trim();
+                var niveau = ws.Cells[row, 6].Text.Trim();
+                var filiere = ws.Cells[row, 7].Text.Trim();
+                var specialite = ws.Cells[row, 8].Text.Trim();
+                var motDePasse = ws.Cells[row, 9].Text.Trim();
 
-                // Parse Nom et Prénom selon le nombre de mots
-                var words = nomsPrenoms.Split(' ', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+                // Ignorer la ligne si totalement vide
+                if (string.IsNullOrWhiteSpace(matricule) &&
+                    string.IsNullOrWhiteSpace(nomsPrenoms) &&
+                    string.IsNullOrWhiteSpace(telephone) &&
+                    string.IsNullOrWhiteSpace(dateInscription) &&
+                    string.IsNullOrWhiteSpace(niveau) &&
+                    string.IsNullOrWhiteSpace(filiere) &&
+                    string.IsNullOrWhiteSpace(specialite) &&
+                    string.IsNullOrWhiteSpace(motDePasse))
+                {
+                    continue;
+                }
 
+                // Parse nom et prénom
+                var names = nomsPrenoms.Split(' ', StringSplitOptions.RemoveEmptyEntries);
                 string nom = "";
                 string prenom = "";
 
-                if (words.Length >= 4)
+                if (names.Length >= 2)
                 {
-                    nom = string.Join(' ', words[0], words[1]);
-                    prenom = string.Join(' ', words[2], words[3]);
+                    nom = string.Join(' ', names[0..2]);        // Les 2 premiers mots pour le nom
+                    prenom = string.Join(' ', names[2..]);      // Le reste pour le prénom
                 }
-                else if (words.Length == 3)
+                else if (names.Length == 1)
                 {
-                    nom = string.Join(' ', words[0], words[1]);
-                    prenom = words[2];
-                }
-                else if (words.Length == 2)
-                {
-                    nom = words[0];
-                    prenom = words[1];
-                }
-                else if (words.Length == 1)
-                {
-                    nom = words[0];
+                    nom = names[0];
                     prenom = "";
                 }
 
-                // Crée un dictionnaire pour test
                 var dict = new Dictionary<string, string>
                 {
                     ["Matricule"] = matricule,
                     ["Nom"] = nom,
                     ["Prenom"] = prenom,
-                    ["Email"] = $"{matricule}@saintjeaningenieur.org",
-                    ["Telephone"] = "",           // valeur par défaut
-                    ["Niveau"] = "L3",           // valeur par défaut
-                    ["Filiere"] = "Informatique",// valeur par défaut
-                    ["EmailInstitutionnel"] = "" // valeur par défaut
+                    ["Telephone"] = telephone,
+                    ["DateInscription"] = dateInscription,
+                    ["Niveau"] = string.IsNullOrWhiteSpace(niveau) ? "L3" : niveau,
+                    ["Filiere"] = string.IsNullOrWhiteSpace(filiere) ? "Informatique" : filiere,
+                    ["Specialite"] = specialite,
+                    ["MotDePasse"] = string.IsNullOrWhiteSpace(motDePasse) ? "" : motDePasse
                 };
 
                 result.Add(dict);
@@ -78,27 +110,73 @@ namespace PGSA_Licence3.Services.Students
             return result;
         }
 
-        /// <summary>
-        /// Convertit le dictionnaire en objet Etudiant avec tous les champs remplis
-        /// </summary>
+        /// Convertit une ligne en Etudiant complet
         public Etudiant ToEtudiant(Dictionary<string, string> row)
         {
-            var matricule = row.ContainsKey("Matricule") ? row["Matricule"] : "unknown";
+            // Prénom et nom complets depuis Excel
+            string prenomComplet = row["Prenom"];
+            string nomComplet = row["Nom"];
+
+            // Pour username/email : ne prendre que le **premier mot du prénom** et le **premier mot du nom**
+            string prenom = prenomComplet.Split(' ', StringSplitOptions.RemoveEmptyEntries)[0];
+            string nom = nomComplet.Split(' ', StringSplitOptions.RemoveEmptyEntries)[0];
+
+            // Normalisation : minuscules, sans accents, sans caractères spéciaux
+            string CleanString(string input)
+            {
+                if (string.IsNullOrWhiteSpace(input)) return "";
+                input = input.ToLower().Trim();
+
+                // Supprime les accents
+                string normalized = string.Concat(input.Normalize(System.Text.NormalizationForm.FormD)
+                    .Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark));
+
+                // Ne garde que lettres et chiffres
+                return new string(normalized.Where(c => char.IsLetterOrDigit(c)).ToArray());
+            }
+
+            string cleanPrenom = CleanString(prenom);
+            string cleanNom = CleanString(nom);
+
+            string username = $"{cleanPrenom}.{cleanNom}";
+            string email = $"{cleanPrenom}.{cleanNom}@gmail.com";
+            string emailInstitutionnel = $"{cleanPrenom}.{cleanNom}@saintjeaningenieur.org";
+
+            // Date inscription
+            DateTime dateInscription;
+            if (!DateTime.TryParse(row["DateInscription"], out dateInscription))
+                dateInscription = DateTime.UtcNow;
+
+            // Mot de passe
+            string password = string.IsNullOrWhiteSpace(row["MotDePasse"])
+                ? "Changeme@2025"
+                : row["MotDePasse"];
+            string hashedPassword = BCrypt.Net.BCrypt.HashPassword(password);
+
+            // Matricule auto
+            string matricule = string.IsNullOrWhiteSpace(row["Matricule"])
+                ? GenerateMatricule(dateInscription, row["Niveau"], row["Filiere"])
+                : row["Matricule"];
 
             return new Etudiant
             {
-                Username = matricule,
-                MotDePasseHash = "hashedDefault", // à remplacer par un vrai hash
-                Email = row.ContainsKey("Email") ? row["Email"] : $"{matricule}@saintjeaningenieur.org",
-                Nom = row.ContainsKey("Nom") ? row["Nom"] : "NomParDefaut",
-                Prenom = row.ContainsKey("Prenom") ? row["Prenom"] : "PrenomParDefaut",
-                Telephone = row.ContainsKey("Telephone") ? row["Telephone"] : "",
+                Username = username,
+                MotDePasseHash = hashedPassword,
+                Email = email,
+                Active = true,
+                CreatedAt = DateTime.UtcNow,
+
+                Nom = nomComplet,       // conserve le nom complet
+                Prenom = prenomComplet, // conserve le prénom complet
+                Telephone = row["Telephone"],
                 Matricule = matricule,
-                Niveau = row.ContainsKey("Niveau") ? row["Niveau"] : "L3",
-                Filiere = row.ContainsKey("Filiere") ? row["Filiere"] : "Informatique",
-                EmailInstitutionnel = row.ContainsKey("EmailInstitutionnel") ? row["EmailInstitutionnel"] : "",
-                DateInscription = DateTime.UtcNow
+                Niveau = row["Niveau"],
+                Filiere = row["Filiere"],
+                Specialite = row["Specialite"],
+                EmailInstitutionnel = emailInstitutionnel,
+                DateInscription = dateInscription
             };
         }
+
     }
 }
