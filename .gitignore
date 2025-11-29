@@ -5,7 +5,6 @@ obj/
 # Visual Studio
 .vs/
 *.suo
-*.user
 *.userprefs
 *.vcxproj.user
 *.ncb
