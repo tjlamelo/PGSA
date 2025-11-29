@@ -43,45 +43,42 @@ namespace PGSA_Licence3.Controllers.Admin.Students
 
         // POST : /Students/Save
         [HttpPost]
-   
-public async Task<IActionResult> Save([FromBody] SaveStudentsRequest request)
-{
-    if (request.Students == null || request.Students.Count == 0)
-        return BadRequest("Aucun étudiant à enregistrer.");
-
-    try
-    {
-        var results = await _saveService.SaveWithConflictsAsync(request.Students, request.OverwriteExisting);
-
-        var savedCount = results.Count(r => r.Saved);
-        var conflicts = results.Where(r => !r.Saved).Select(r => new
+        public async Task<IActionResult> Save([FromBody] SaveStudentsRequest request)
         {
-            r.Student.Matricule,
-            r.Student.Username,
-            r.Student.Email,
-            r.Problem
-        }).ToList();
+            if (request.Students == null || request.Students.Count == 0)
+                return BadRequest("Aucun étudiant à enregistrer.");
 
-        return Ok(new
-        {
-            message = $"Import terminé. {savedCount} étudiant(s) enregistré(s).",
-            totalSaved = savedCount,
-            conflicts
-        });
-    }
-    catch (Exception ex)
-    {
-        // Retourne l'exception en JSON pour debug
-        return StatusCode(500, new { error = ex.Message, stack = ex.StackTrace });
-    }
-}
+            try
+            {
+                // Appel sans overwrite, import irréversible
+                var results = await _saveService.SaveWithConflictsAsync(request.Students);
 
+                var savedCount = results.Count(r => r.Saved);
+                var conflicts = results.Where(r => !r.Saved).Select(r => new
+                {
+                    r.Student.Matricule,
+                    r.Student.Username,
+                    r.Student.Email,
+                    r.Problem
+                }).ToList();
+
+                return Ok(new
+                {
+                    message = $"Import terminé. {savedCount} étudiant(s) enregistré(s).",
+                    totalSaved = savedCount,
+                    conflicts
+                });
+            }
+            catch (Exception ex)
+            {
+                // Retourne l'exception en JSON pour debug
+                return StatusCode(500, new { error = ex.Message, stack = ex.StackTrace });
+            }
+        }
 
         public class SaveStudentsRequest
         {
             public List<Etudiant> Students { get; set; } = new();
-            public bool OverwriteExisting { get; set; } = false;
         }
-
     }
 }
