@@ -1,0 +1,23 @@
+@model PGSA_Licence3.Models.User
+
+@{
+    ViewData["Title"] = "Modifier Rôles";
+    var roles = ViewBag.Roles as List<PGSA_Licence3.Models.Role> ?? new List<PGSA_Licence3.Models.Role>();
+}
+
+<h2>Modifier les rôles pour @Model.Username</h2>
+
+<form method="post" asp-action="EditRolesPost" asp-route-id="@Model.Id">
+    <div class="form-group">
+        @foreach(var r in roles)
+        {
+            var isChecked = Model.Roles != null && Model.Roles.Any(rr => rr.Id == r.Id);
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="selectedRoles" value="@r.Id" @(isChecked ? "checked" : "") />
+                <label class="form-check-label">@r.Nom</label>
+            </div>
+        }
+    </div>
+    <button class="btn btn-primary" type="submit">Sauvegarder</button>
+    <a class="btn btn-secondary" href="/admin/users">Annuler</a>
+</form>

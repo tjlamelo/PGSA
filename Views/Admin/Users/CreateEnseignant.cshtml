@@ -1,0 +1,67 @@
+@model PGSA_Licence3.Models.Enseignant
+
+@{
+    ViewData["Title"] = "Créer Enseignant";
+    var cours = ViewBag.Cours as List<PGSA_Licence3.Models.Cours> ?? new List<PGSA_Licence3.Models.Cours>();
+    var groupes = ViewBag.Groupes as List<PGSA_Licence3.Models.Groupe> ?? new List<PGSA_Licence3.Models.Groupe>();
+}
+
+<h2>Créer un Enseignant</h2>
+
+<form method="post" asp-action="CreateEnseignantPost">
+    <div class="mb-3">
+        <label class="form-label">Nom</label>
+        <input class="form-control" name="Nom" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Prenom</label>
+        <input class="form-control" name="Prenom" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Email</label>
+        <input class="form-control" name="Email" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Username</label>
+        <input class="form-control" name="Username" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Mot de passe</label>
+        <input class="form-control" type="password" name="plainPassword" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Matricule</label>
+        <input class="form-control" name="Matricule" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Téléphone</label>
+        <input class="form-control" name="Telephone" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Spécialité</label>
+        <input class="form-control" name="Specialite" />
+    </div>
+
+    <h4>Assigner des cours</h4>
+    @foreach(var c in cours)
+    {
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="coursIds" value="@c.Id" />
+            <label class="form-check-label">@c.Nom (@c.Code) - @c.Filiere</label>
+        </div>
+    }
+
+    <h4 class="mt-4">Assigner des classes</h4>
+    @foreach(var g in groupes)
+    {
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="groupeIds" value="@g.Id" />
+            <label class="form-check-label">@g.Nom - @g.Niveau - @g.Filiere</label>
+        </div>
+    }
+
+    <div class="mt-3">
+        <button class="btn btn-success" type="submit">Créer</button>
+        <a class="btn btn-secondary" href="/admin/users">Annuler</a>
+    </div>
+</form>

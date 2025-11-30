@@ -60,6 +60,16 @@ namespace PGSA_Licence3.Data
                     j => j.HasOne<Role>().WithMany().HasForeignKey("RoleId"),
                     j => j.ToTable("RolePermissions"));
             
+            // Configuration Enseignant - Groupe (many-to-many)
+            modelBuilder.Entity<Enseignant>()
+                .HasMany(e => e.Groupes)
+                .WithMany(g => g.Enseignants)
+                .UsingEntity<Dictionary<string, object>>(
+                    "EnseignantGroupe",
+                    j => j.HasOne<Groupe>().WithMany().HasForeignKey("GroupeId"),
+                    j => j.HasOne<Enseignant>().WithMany().HasForeignKey("EnseignantId"),
+                    j => j.ToTable("EnseignantGroupes"));
+            
             // Configuration des relations un-à-plusieurs
             modelBuilder.Entity<Groupe>()
                 .HasMany(g => g.Etudiants)

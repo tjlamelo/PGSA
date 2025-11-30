@@ -26,7 +26,9 @@ namespace PGSA_Licence3.Models
         [MaxLength(100)]
         public string? Specialite { get; set; }
 
-
         public DateTime DateEmbauche { get; set; } = DateTime.UtcNow;
+
+        // Many-to-many relation with Groupe (classes)
+        public ICollection<Groupe>? Groupes { get; set; } = new List<Groupe>();
     }
 }

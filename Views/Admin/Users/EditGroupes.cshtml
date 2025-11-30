@@ -1,0 +1,23 @@
+@model PGSA_Licence3.Models.Enseignant
+
+@{
+    ViewData["Title"] = "Modifier Groupes";
+    var groupes = ViewBag.Groupes as List<PGSA_Licence3.Models.Groupe> ?? new List<PGSA_Licence3.Models.Groupe>();
+}
+
+<h2>Assigner des classes à @Model.Nom @Model.Prenom</h2>
+
+<form method="post" asp-action="EditGroupesPost" asp-route-id="@Model.Id">
+    <div class="form-group">
+        @foreach(var g in groupes)
+        {
+            var isChecked = Model.Groupes != null && Model.Groupes.Any(gg => gg.Id == g.Id);
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="selectedGroupes" value="@g.Id" @(isChecked ? "checked" : "") />
+                <label class="form-check-label">@g.Nom - @g.Niveau - @g.Filiere</label>
+            </div>
+        }
+    </div>
+    <button class="btn btn-primary" type="submit">Sauvegarder</button>
+    <a class="btn btn-secondary" href="/admin/users">Annuler</a>
+</form>

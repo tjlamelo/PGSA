@@ -1,0 +1,39 @@
+@model List<PGSA_Licence3.Models.User>
+
+@{
+    ViewData["Title"] = "Utilisateurs";
+}
+
+<h2>Utilisateurs</h2>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Rôles</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach(var u in Model)
+    {
+        <tr>
+            <td>@u.Id</td>
+            <td>@u.Username</td>
+            <td>@u.Email</td>
+            <td>@(u.Roles != null ? string.Join(", ", u.Roles.Select(r => r.Nom)) : "-")</td>
+            <td>
+                <a class="btn btn-sm btn-primary" href="/admin/users/editroles/@u.Id">Modifier rôles</a>
+                @if (u.GetType().Name == "Enseignant")
+                {
+                    <a class="btn btn-sm btn-info" href="/admin/users/edit-groupes/@u.Id">Classes</a>
+                }
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
+
+<a class="btn btn-success" href="/admin/users/create-enseignant">Créer un Enseignant</a>
