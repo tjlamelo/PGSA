@@ -1,0 +1,136 @@
+@{
+    ViewData["Title"] = "Connexion - Institut Saint Jean";
+}
+
+<div class="container-fluid min-vh-100">
+    <div class="row no-gutters min-vh-100">
+        <!-- Colonne gauche (Bureau uniquement) -->
+        <div class="col-md-6 d-none d-md-flex flex-column justify-content-center align-items-center text-white position-relative overflow-hidden">
+            <!-- Image de fond -->
+            <div class="position-absolute w-100 h-100" style="background-image: url('https://picsum.photos/seed/institut-saint-jean/1200/800.jpg'); background-size: cover; background-position: center; filter: brightness(0.7);"></div>
+            
+            <!-- Contenu superposé -->
+            <div class="position-relative text-center px-4">
+                <h1 class="display-4 font-weight-bold mb-4">Institut Saint Jean</h1>
+                <p class="lead">Excellence éducative depuis 1950</p>
+                <div class="mt-5">
+                    <i class="fas fa-graduation-cap fa-3x mb-3"></i>
+                    <p class="h5">Système de Gestion d'Assiduité</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Colonne droite (Formulaire) -->
+        <div class="col-md-6 d-flex flex-column justify-content-center align-items-center bg-light p-4">
+            <!-- Logo (Mobile uniquement) -->
+            <div class="d-md-none mb-4 text-center">
+                <img src="~/images/logo.png" alt="Logo Institut Saint Jean" class="img-fluid" style="max-height: 80px;">
+                <h2 class="mt-2">Institut Saint Jean</h2>
+            </div>
+            
+            <!-- Formulaire de connexion -->
+            <div class="w-100" style="max-width: 400px;">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body p-4">
+                        <h3 class="text-center mb-4">Connexion</h3>
+                        
+                        <form method="post">
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-primary text-white">
+                                        <i class="fas fa-envelope"></i>
+                                    </span>
+                                    <input type="email" class="form-control" id="email" placeholder="nom@institut.fr" required>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Mot de passe</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-primary text-white">
+                                        <i class="fas fa-lock"></i>
+                                    </span>
+                                    <input type="password" class="form-control" id="password" placeholder="••••••••" required>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid gap-2 mb-3">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-sign-in-alt me-2"></i> Connexion
+                                </button>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between">
+                                <a href="#" class="text-decoration-none">Mot de passe oublié ?</a>
+                                <a href="#" class="text-decoration-none">S'inscrire</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-4 text-muted">
+                    <small>© 2023 Institut Saint Jean. Tous droits réservés.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Styles responsives */
+    @@media (max-width: 767.98px) {
+        .min-vh-100 {
+            min-height: 100vh !important;
+            display: flex !important;
+            align-items: center !important;
+        }
+        
+        .col-md-6.d-flex {
+            min-height: 100vh !important;
+        }
+    }
+    
+    /* Animation bouton */
+    .btn-primary {
+        transition: all 0.3s ease;
+        border-radius: 50px;
+        padding: 12px 24px;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+    }
+    
+    /* Style carte */
+    .card {
+        border-radius: 15px;
+        overflow: hidden;
+    }
+    
+    /* Style input group */
+    .input-group-text {
+        border-right: none;
+    }
+    
+    .form-control:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
+    }
+    
+    .form-control {
+        border-left: none;
+    }
+    
+    /* Animation logo */
+    .d-md-none img {
+        animation: float 3s ease-in-out infinite;
+    }
+    
+    @@keyframes float {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+        100% { transform: translateY(0px); }
+    }
+</style>

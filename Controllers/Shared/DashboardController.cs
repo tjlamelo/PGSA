@@ -4,19 +4,21 @@ using PGSA_Licence3.Models;
 
 namespace PGSA_Licence3.Controllers
 {
-    public class HomeController : Controller
+    [Route("dashboard")]
+    public class DashboardController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
+        private readonly ILogger< DashboardController> _logger;
 
-        public HomeController(ILogger<HomeController> logger)
+        public DashboardController(ILogger<DashboardController> logger)
         {
             _logger = logger;
         }
 
-        public IActionResult Index()
-        {
-            return View();
-        }
+       [HttpGet("index")]
+    public IActionResult Index()
+    {
+        return View("~/Views/DashboardIndex.cshtml");
+    }
 
         public IActionResult Privacy()
         {

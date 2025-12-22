@@ -1,0 +1,60 @@
+@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "_DashboardLayout";
+}
+
+<div class="container-fluid fade-in">
+
+ 
+
+    <!-- Statistiques -->
+    <div class="row g-4 mb-5">
+       
+    </div>
+
+    <!-- Tableau -->
+    <div class="row">
+     
+    </div>
+
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("Dashboard admin chargé !");
+            
+            // Animation au chargement
+            const cards = document.querySelectorAll('.card');
+            cards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.classList.add('fade-in');
+                }, index * 100);
+            });
+        });
+    </script>
+    
+    <style>
+        .hover-lift {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .hover-lift:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+        }
+        
+        .table-hover tbody tr:hover {
+            background-color: rgba(44, 123, 229, 0.05);
+        }
+        
+        .btn-group .btn:hover {
+            background-color: rgba(44, 123, 229, 0.1);
+        }
+        
+        .badge {
+            font-weight: 500;
+            padding: 0.4em 0.8em;
+        }
+    </style>
+}
