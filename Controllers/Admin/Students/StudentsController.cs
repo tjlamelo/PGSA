@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using PGSA_Licence3.Services.Students;
 using PGSA_Licence3.Models;
 using PGSA_Licence3.Data; // pour ApplicationDbContext
+using System.Threading.Tasks;
 
 namespace PGSA_Licence3.Controllers.Admin.Students
 {
@@ -12,7 +13,7 @@ namespace PGSA_Licence3.Controllers.Admin.Students
 
         public StudentsController(ApplicationDbContext db)
         {
-            _importService = new StudentImportService();
+            _importService = new StudentImportService(db);
             _saveService = new SaveImportedStudentsService(db);
         }
 
@@ -25,7 +26,7 @@ namespace PGSA_Licence3.Controllers.Admin.Students
 
         // POST : /Students/Import
         [HttpPost]
-        public IActionResult Import(IFormFile file)
+        public async Task<IActionResult> Import(IFormFile file)
         {
             if (file == null || file.Length == 0)
                 return BadRequest("Veuillez fournir un fichier Excel.");
@@ -34,9 +35,11 @@ namespace PGSA_Licence3.Controllers.Admin.Students
 
             var rows = _importService.ImportExcel(stream);
 
-            var etudiants = rows
-                .Select(row => _importService.ToEtudiant(row))
-                .ToList();
+            var etudiants = new List<Etudiant>();
+            foreach (var row in rows)
+            {
+                etudiants.Add(await _importService.ToEtudiantAsync(row));
+            }
 
             return Json(etudiants);
         }

@@ -1,0 +1,397 @@
+@{
+    ViewData["Title"] = "Gestion de Séances";
+    ViewData["Breadcrumb"] = new List<(string Text, string Url)>
+    {
+        ("Gérer les séances", "/Seance")
+    };
+    Layout = "_DashboardLayout";
+}
+
+<div class="container-fluid mt-4 fade-in">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Gestion des Séances</h2>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#seanceModal">
+            <i class="bi bi-plus-circle me-2"></i>Créer une séance
+        </button>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h5 class="mb-0">Liste des séances</h5>
+                </div>
+                <div class="col-auto">
+                    <div class="input-group">
+                        <input type="text" id="searchInput" class="form-control" placeholder="Rechercher...">
+                        <button class="btn btn-outline-secondary" type="button">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped" id="seancesTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Cours</th>
+                            <th>Groupe / Détails</th>
+                            <th>Date et heure</th>
+                            <th>Salle</th>
+                            <th>Type</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var seance in Model)
+                        {
+                            <tr>
+                                <td>@seance.Id</td>
+                                <td>@seance.Cours?.Nom</td>
+                                <td>
+                                    @if (seance.Groupe != null)
+                                    {
+                                        @seance.Groupe.Nom
+                                    }
+                                    else
+                                    {
+                                        var details = new List<string>();
+                                        if (seance.Cycle != null) details.Add(seance.Cycle.NomCycle);
+                                        if (seance.Niveau != null) details.Add(seance.Niveau.NomNiveau);
+                                        if (seance.Specialite != null) details.Add(seance.Specialite.NomSpecialite);
+                                        @string.Join(" - ", details)
+                                    }
+                                </td>
+                                <td>@seance.DateHeureDebut.ToString("dd/MM/yyyy HH:mm") - @seance.DateHeureFin.ToString("HH:mm")</td>
+                                <td>@seance.Salle</td>
+                                <td>@seance.Type</td>
+                                <td>
+                                    <span class="badge bg-@(GetStatutColor(seance.Statut))">
+                                        @seance.Statut
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-sm btn-outline-primary edit-btn" 
+                                                data-id="@seance.Id" 
+                                                data-cours-id="@seance.CoursId"
+                                                data-groupe-id="@(seance.GroupeId?.ToString() ?? "")"
+                                                data-cycle-id="@(seance.CycleId?.ToString() ?? "")"
+                                                data-niveau-id="@(seance.NiveauId?.ToString() ?? "")"
+                                                data-specialite-id="@(seance.SpecialiteId?.ToString() ?? "")"
+                                                data-date-debut="@seance.DateHeureDebut.ToString("yyyy-MM-ddTHH:mm")"
+                                                data-date-fin="@seance.DateHeureFin.ToString("yyyy-MM-ddTHH:mm")"
+                                                data-salle="@seance.Salle"
+                                                data-type="@seance.Type"
+                                                data-statut="@seance.Statut">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <a href="@Url.Action("Delete", "Seance", new { id = seance.Id })" 
+                                           class="btn btn-sm btn-outline-danger delete-btn"
+                                           onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette séance ?');">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour créer/éditer une séance -->
+<div class="modal fade" id="seanceModal" tabindex="-1" aria-labelledby="seanceModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form asp-action="Save" method="post" id="seanceForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="seanceModalLabel">Créer une séance</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="seanceId" name="Id" value="0">
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="CoursId" class="form-label">Cours <span class="text-danger">*</span></label>
+                            <select class="form-select" id="CoursId" name="CoursId" required>
+                                <option value="">Sélectionner un cours</option>
+                                @foreach (var cours in ViewBag.Cours)
+                                {
+                                    <option value="@cours.Id">@cours.Nom (@cours.Code)</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="GroupeId" class="form-label">Groupe</label>
+                            <select class="form-select" id="GroupeId" name="GroupeId">
+                                <option value="">Tous les groupes</option>
+                                @foreach (var groupe in ViewBag.Groupes)
+                                {
+                                    <option value="@groupe.Id">@groupe.Nom</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Nouveaux champs pour cycle, niveau et spécialité -->
+                    <div class="row mb-3" id="cycleNiveauSpecialiteFields" style="display: none;">
+                        <div class="col-md-4">
+                            <label for="CycleId" class="form-label">Cycle</label>
+                            <select class="form-select" id="CycleId" name="CycleId">
+                                <option value="">Sélectionner un cycle</option>
+                                @foreach (var cycle in ViewBag.Cycles)
+                                {
+                                    <option value="@cycle.Id">@cycle.NomCycle</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="NiveauId" class="form-label">Niveau</label>
+                            <select class="form-select" id="NiveauId" name="NiveauId">
+                                <option value="">Sélectionner un niveau</option>
+                                @foreach (var niveau in ViewBag.Niveaux)
+                                {
+                                    <option value="@niveau.Id">@niveau.NomNiveau</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="SpecialiteId" class="form-label">Spécialité</label>
+                            <select class="form-select" id="SpecialiteId" name="SpecialiteId">
+                                <option value="">Sélectionner une spécialité</option>
+                                @foreach (var specialite in ViewBag.Specialites)
+                                {
+                                    <option value="@specialite.Id">@specialite.NomSpecialite</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="DateHeureDebut" class="form-label">Date et heure de début <span class="text-danger">*</span></label>
+                            <input type="datetime-local" class="form-control" id="DateHeureDebut" name="DateHeureDebut" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="DateHeureFin" class="form-label">Date et heure de fin <span class="text-danger">*</span></label>
+                            <input type="datetime-local" class="form-control" id="DateHeureFin" name="DateHeureFin" required>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="Salle" class="form-label">Salle <span class="text-danger">*</span></label>
+                            <select class="form-select" id="Salle" name="Salle" required>
+                                <option value="">Sélectionner une salle</option>
+                                <option value="A101">A101</option>
+                                <option value="A102">A102</option>
+                                <option value="A201">A201</option>
+                                <option value="B101">B101</option>
+                                <option value="B201">B201</option>
+                                <option value="Amphi 1">Amphi 1</option>
+                                <option value="Amphi 2">Amphi 2</option>
+                                <option value="Labo Info 1">Labo Info 1</option>
+                                <option value="Labo Info 2">Labo Info 2</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="Type" class="form-label">Type de séance <span class="text-danger">*</span></label>
+                            <select class="form-select" id="Type" name="Type" required>
+                                <option value="">Sélectionner un type</option>
+                                <option value="CM">Cours Magistral (CM)</option>
+                                <option value="TD">Travaux Dirigés (TD)</option>
+                                <option value="TP">Travaux Pratiques (TP)</option>
+                                <option value="Evaluation">Evaluation</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="Statut" class="form-label">Statut <span class="text-danger">*</span></label>
+                        <select class="form-select" id="Statut" name="Statut" required>
+                            <option value="Planifiee">Planifiée</option>
+                            <option value="EnCours">En cours</option>
+                            <option value="Terminee">Terminée</option>
+                            <option value="Annulee">Annulée</option>
+                        </select>
+                    </div>
+
+                    <div id="conflictAlert" class="alert alert-warning d-none" role="alert">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <span id="conflictMessage"></span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary" id="saveBtn">
+                        <i class="bi bi-check-circle me-2"></i>Enregistrer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Gérer l'affichage des champs Cycle, Niveau et Specialite
+            const groupeSelect = document.getElementById('GroupeId');
+            const cycleNiveauSpecialiteFields = document.getElementById('cycleNiveauSpecialiteFields');
+            
+            function toggleCycleNiveauSpecialiteFields() {
+                if (groupeSelect.value === "") {
+                    cycleNiveauSpecialiteFields.style.display = 'flex';
+                } else {
+                    cycleNiveauSpecialiteFields.style.display = 'none';
+                }
+            }
+            
+            groupeSelect.addEventListener('change', toggleCycleNiveauSpecialiteFields);
+            toggleCycleNiveauSpecialiteFields(); // Initialiser l'état
+
+            // Réinitialiser le formulaire à la fermeture de la modal
+            document.getElementById('seanceModal').addEventListener('hidden.bs.modal', function() {
+                document.getElementById('seanceForm').reset();
+                document.getElementById('seanceId').value = '0';
+                document.getElementById('seanceModalLabel').textContent = 'Créer une séance';
+                document.getElementById('conflictAlert').classList.add('d-none');
+                toggleCycleNiveauSpecialiteFields(); // Réinitialiser l'affichage des champs
+            });
+
+            // Gérer l'édition
+            document.querySelectorAll('.edit-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
+                    const coursId = this.getAttribute('data-cours-id');
+                    const groupeId = this.getAttribute('data-groupe-id');
+                    const cycleId = this.getAttribute('data-cycle-id');
+                    const niveauId = this.getAttribute('data-niveau-id');
+                    const specialiteId = this.getAttribute('data-specialite-id');
+                    const dateDebut = this.getAttribute('data-date-debut');
+                    const dateFin = this.getAttribute('data-date-fin');
+                    const salle = this.getAttribute('data-salle');
+                    const type = this.getAttribute('data-type');
+                    const statut = this.getAttribute('data-statut');
+
+                    document.getElementById('seanceId').value = id;
+                    document.getElementById('CoursId').value = coursId;
+                    document.getElementById('GroupeId').value = groupeId;
+                    document.getElementById('CycleId').value = cycleId;
+                    document.getElementById('NiveauId').value = niveauId;
+                    document.getElementById('SpecialiteId').value = specialiteId;
+                    document.getElementById('DateHeureDebut').value = dateDebut;
+                    document.getElementById('DateHeureFin').value = dateFin;
+                    document.getElementById('Salle').value = salle;
+                    document.getElementById('Type').value = type;
+                    document.getElementById('Statut').value = statut;
+
+                    document.getElementById('seanceModalLabel').textContent = 'Modifier une séance';
+                    
+                    // Appeler la fonction pour afficher/masquer les champs
+                    toggleCycleNiveauSpecialiteFields();
+                    
+                    const modal = new bootstrap.Modal(document.getElementById('seanceModal'));
+                    modal.show();
+                });
+            });
+
+            // Validation des dates et vérification des conflits
+            const dateDebutInput = document.getElementById('DateHeureDebut');
+            const dateFinInput = document.getElementById('DateHeureFin');
+            const salleSelect = document.getElementById('Salle');
+            const conflictAlert = document.getElementById('conflictAlert');
+            const conflictMessage = document.getElementById('conflictMessage');
+            const saveBtn = document.getElementById('saveBtn');
+
+            function checkDates() {
+                const dateDebut = new Date(dateDebutInput.value);
+                const dateFin = new Date(dateFinInput.value);
+                
+                if (dateDebut >= dateFin) {
+                    conflictAlert.classList.remove('d-none', 'alert-warning');
+                    conflictAlert.classList.add('alert-danger');
+                    conflictMessage.textContent = "L'heure de début doit être antérieure à l'heure de fin.";
+                    saveBtn.disabled = true;
+                    return false;
+                }
+                
+                // Vérification des conflits (simulation)
+                // Dans une vraie application, vous feriez un appel AJAX pour vérifier les conflits
+                const salle = salleSelect.value;
+                if (salle && dateDebut && dateFin) {
+                    // Simuler un conflit pour la démo
+                    const hasConflict = Math.random() < 0.2; // 20% de chance de conflit pour la démo
+                    
+                    if (hasConflict) {
+                        conflictAlert.classList.remove('d-none', 'alert-danger');
+                        conflictAlert.classList.add('alert-warning');
+                        conflictMessage.textContent = `Attention : Un conflit potentiel a été détecté pour la salle ${salle} à cette période.`;
+                        saveBtn.disabled = false;
+                        return true;
+                    } else {
+                        conflictAlert.classList.add('d-none');
+                        saveBtn.disabled = false;
+                        return true;
+                    }
+                }
+                
+                return true;
+            }
+
+            dateDebutInput.addEventListener('change', checkDates);
+            dateFinInput.addEventListener('change', checkDates);
+            salleSelect.addEventListener('change', checkDates);
+
+            // Filtrage du tableau
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('keyup', function() {
+                const searchTerm = this.value.toLowerCase();
+                const rows = document.querySelectorAll('#seancesTable tbody tr');
+                
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    row.style.display = text.includes(searchTerm) ? '' : 'none';
+                });
+            });
+        });
+    </script>
+}
+
+@functions {
+    private string GetStatutColor(StatutSeance statut)
+    {
+        return statut switch
+        {
+            StatutSeance.Planifiee => "info",
+            StatutSeance.EnCours => "primary",
+            StatutSeance.Terminee => "success",
+            StatutSeance.Annulee => "danger",
+            _ => "secondary"
+        };
+    }
+}

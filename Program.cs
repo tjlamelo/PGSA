@@ -2,6 +2,7 @@ using PGSA_Licence3.Data;
 using Microsoft.EntityFrameworkCore;
 using PGSA_Licence3.Models.Seeders;
  
+using PGSA_Licence3.Models;
 var builder = WebApplication.CreateBuilder(args);
 
 // 🔹 Ajouter le DbContext avec MySQL
@@ -22,12 +23,11 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-using (var scope = app.Services.CreateScope())
-{
-    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    await RoleSeeder.SeedRolesAsync(context);
-    await EnseignantCoursSeanceSeeder.SeedAsync(context);
-}
+// using (var scope = app.Services.CreateScope())
+// {
+//     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+//     await DatabaseSeeder.SeedAsync(context);
+// }
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();

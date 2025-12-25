@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PGSA_Licence3.Data;
 
@@ -11,9 +12,11 @@ using PGSA_Licence3.Data;
 namespace PGSA_Licence3.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251222172626_UpdateEntities")]
+    partial class UpdateEntities
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -552,32 +555,10 @@ namespace PGSA_Licence3.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("varchar(150)");
 
-                    b.Property<string>("EmailInstitutionnel")
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
-                    b.Property<string>("Matricule")
-                        .HasMaxLength(20)
-                        .HasColumnType("varchar(20)");
-
                     b.Property<string>("MotDePasseHash")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
-
-                    b.Property<string>("Nom")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
-                    b.Property<string>("Prenom")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
-                    b.Property<string>("Telephone")
-                        .HasMaxLength(20)
-                        .HasColumnType("varchar(20)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime(6)");
@@ -688,9 +669,43 @@ namespace PGSA_Licence3.Migrations
                     b.Property<DateTime>("DateEmbauche")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<string>("Matricule")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<string>("Nom")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("Prenom")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
                     b.Property<string>("Specialite")
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
+
+                    b.Property<string>("Telephone")
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.ToTable("Users", t =>
+                        {
+                            t.Property("Matricule")
+                                .HasColumnName("Enseignant_Matricule");
+
+                            t.Property("Nom")
+                                .HasColumnName("Enseignant_Nom");
+
+                            t.Property("Prenom")
+                                .HasColumnName("Enseignant_Prenom");
+
+                            t.Property("Telephone")
+                                .HasColumnName("Enseignant_Telephone");
+                        });
 
                     b.HasDiscriminator().HasValue("Enseignant");
                 });
@@ -705,14 +720,36 @@ namespace PGSA_Licence3.Migrations
                     b.Property<DateTime>("DateInscription")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<string>("EmailInstitutionnel")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
                     b.Property<int?>("GroupeId")
                         .HasColumnType("int");
+
+                    b.Property<string>("Matricule")
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
 
                     b.Property<int>("NiveauId")
                         .HasColumnType("int");
 
+                    b.Property<string>("Nom")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("Prenom")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
                     b.Property<int>("SpecialiteId")
                         .HasColumnType("int");
+
+                    b.Property<string>("Telephone")
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
 
                     b.HasIndex("CycleId");
 
@@ -766,7 +803,7 @@ namespace PGSA_Licence3.Migrations
             modelBuilder.Entity("PGSA_Licence3.Models.Cours", b =>
                 {
                     b.HasOne("PGSA_Licence3.Models.Enseignant", "Enseignant")
-                        .WithMany("Cours")
+                        .WithMany()
                         .HasForeignKey("EnseignantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -971,11 +1008,6 @@ namespace PGSA_Licence3.Migrations
                     b.Navigation("CahierDeTexte");
 
                     b.Navigation("Validations");
-                });
-
-            modelBuilder.Entity("PGSA_Licence3.Models.Enseignant", b =>
-                {
-                    b.Navigation("Cours");
                 });
 #pragma warning restore 612, 618
         }

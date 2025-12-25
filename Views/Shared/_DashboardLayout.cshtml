@@ -15,7 +15,9 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <!-- Google Fonts - Poppins -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
+        <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/PGSA_Licence3.styles.css" asp-append-version="true" />
     <style>
         :root {
             --primary: #1a3b59;
@@ -747,9 +749,9 @@
             <!-- Section Gestion des Séances -->
             <div class="sidebar-section">Gestion des Séances</div>
             <li>
-                <a href="/Sessions" data-tooltip="Création de séances">
+                <a href="/Seance" data-tooltip="Création de séances">
                     <i class="bi bi-calendar-plus"></i>
-                    <span class="menu-text">Création de séances</span>
+                    <span class="menu-text">Séances</span>
                 </a>
             </li>
             <li>
@@ -947,7 +949,9 @@
             });
         });
     </script>
-
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
     @RenderSection("Scripts", required: false)
 </body>
 </html>

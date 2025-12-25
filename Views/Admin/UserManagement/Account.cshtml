@@ -1,0 +1,666 @@
+@{
+    ViewData["Title"] = "Gestion des Comptes Utilisateurs";
+    ViewData["Breadcrumb"] = new List<(string Text, string Url)>
+    {
+        ("Administration", "/Admin"),
+        ("Gestion des Comptes", "/Admin/UserManagement/Account")
+    };
+    Layout = "_DashboardLayout";
+}
+
+@model List<PGSA_Licence3.Models.UserViewModel>
+
+<div class="container-fluid mt-4 fade-in">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Gestion des Comptes Utilisateurs</h2>
+        <div>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#userModal">
+                <i class="bi bi-person-plus me-2"></i>Ajouter un utilisateur
+            </button>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i> @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h5 class="mb-0">Liste des Utilisateurs</h5>
+                </div>
+                <div class="col-auto">
+                    <div class="input-group">
+                        <input type="text" id="searchInput" class="form-control" placeholder="Rechercher...">
+                        <button class="btn btn-outline-secondary" type="button">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped" id="usersTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nom</th>
+                            <th>Type</th>
+                            <th>Email</th>
+                            <th>Nom d'utilisateur</th>
+                            <th>Email Institutionnel</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var user in Model)
+                        {
+                            <tr>
+                                <td>@user.Id</td>
+                                <td><strong>@user.Prenom @user.Nom</strong></td>
+                                <td>
+                                    <span class="badge bg-@(user.Type == "Étudiant" ? "info" : "primary")">
+                                        @user.Type
+                                    </span>
+                                </td>
+                                <td>@user.Email</td>
+                                @* <td>@user.Username</td> *@
+                                <td>
+                                    @if (user.Type == "Étudiant")
+                                    {
+                                        <div>
+                                            @if (!string.IsNullOrEmpty(user.Cycle))
+                                            {
+                                                <span class="badge bg-secondary me-1">@user.Cycle</span>
+                                            }
+                                            @if (!string.IsNullOrEmpty(user.Niveau))
+                                            {
+                                                <span class="badge bg-secondary me-1">@user.Niveau</span>
+                                            }
+                                            @if (!string.IsNullOrEmpty(user.Specialite))
+                                            {
+                                                <span class="badge bg-secondary">@user.Specialite</span>
+                                            }
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span>@user.Specialite</span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="badge bg-@(user.Active ? "success" : "danger")">
+                                        @(user.Active ? "Actif" : "Inactif")
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-sm btn-outline-primary edit-btn" 
+                                                data-id="@user.Id" 
+                                                data-type="@user.Type">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        @if (user.Active)
+                                        {
+                                            <button type="button" class="btn btn-sm btn-outline-warning deactivate-btn" 
+                                                    data-id="@user.Id" 
+                                                    data-name="@user.Prenom @user.Nom">
+                                                <i class="bi bi-person-x"></i>
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button type="button" class="btn btn-sm btn-outline-success activate-btn" 
+                                                    data-id="@user.Id" 
+                                                    data-name="@user.Prenom @user.Nom">
+                                                <i class="bi bi-person-check"></i>
+                                            </button>
+                                        }
+                                             <form asp-action="ResetPassword"
+              asp-route-userId="@user.Id"
+              method="post"
+              onsubmit="return confirm('Réinitialiser le mot de passe à Changeme@2026 ?');">
+            @Html.AntiForgeryToken()
+            <button class="btn btn-sm btn-outline-info" title="Réinitialiser le mot de passe">
+                <i class="bi bi-key"></i>
+            </button>
+        </form>
+                                        <form asp-action="DeleteUser"
+              asp-route-userId="@user.Id"
+              method="post"
+              onsubmit="return confirm('SUPPRESSION DÉFINITIVE. Continuer ?');">
+            @Html.AntiForgeryToken()
+            <button class="btn btn-sm btn-outline-danger" title="Supprimer définitivement">
+                <i class="bi bi-trash"></i>
+            </button>
+        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour créer/éditer un utilisateur -->
+<div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="userModalLabel">Ajouter un utilisateur</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info d-flex align-items-center" role="alert">
+                    <i class="bi bi-info-circle-fill me-2"></i>
+                    <div>
+                        <strong>Information :</strong> Le nom d'utilisateur, l'email institutionnel et le mot de passe seront générés automatiquement.
+                    </div>
+                </div>
+                
+                <ul class="nav nav-tabs" id="userTypeTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="etudiant-tab" data-bs-toggle="tab" data-bs-target="#etudiant-tab-pane" type="button" role="tab" aria-controls="etudiant-tab-pane" aria-selected="true">Étudiant</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="enseignant-tab" data-bs-toggle="tab" data-bs-target="#enseignant-tab-pane" type="button" role="tab" aria-controls="enseignant-tab-pane" aria-selected="false">Enseignant</button>
+                    </li>
+                </ul>
+                <div class="tab-content mt-3" id="userTypeTabsContent">
+                    <!-- Formulaire Étudiant -->
+                    <div class="tab-pane fade show active" id="etudiant-tab-pane" role="tabpanel" aria-labelledby="etudiant-tab" tabindex="0">
+                        <form id="etudiantForm" asp-action="CreateEtudiant" method="post">
+                            <input type="hidden" id="etudiantId" name="Id" value="0">
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="etudiantNom" class="form-label">Nom <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="etudiantNom" name="Nom" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="etudiantPrenom" class="form-label">Prénom <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="etudiantPrenom" name="Prenom" required>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="etudiantEmail" class="form-label">Email <span class="text-danger">*</span></label>
+                                    <input type="email" class="form-control" id="etudiantEmail" name="Email" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="etudiantTelephone" class="form-label">Téléphone</label>
+                                    <input type="tel" class="form-control" id="etudiantTelephone" name="Telephone">
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="etudiantEmailInstitutionnel" class="form-label">Email Institutionnel</label>
+                                    <input type="email" class="form-control" id="etudiantEmailInstitutionnel" name="EmailInstitutionnel" readonly>
+                                    <div class="form-text">Généré automatiquement au format prenom.nom@isj.org</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="etudiantUsername" class="form-label">Nom d'utilisateur</label>
+                                    <input type="text" class="form-control" id="etudiantUsername" name="Username" readonly>
+                                    <div class="form-text">Généré automatiquement au format prenom.nom</div>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <label for="etudiantCycleId" class="form-label">Cycle <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="etudiantCycleId" name="CycleId" required>
+                                        <option value="">Sélectionner un cycle</option>
+                                        @foreach (var cycle in ViewBag.CycleList)
+                                        {
+                                            <option value="@cycle.Value">@cycle.Text</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="etudiantNiveauId" class="form-label">Niveau <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="etudiantNiveauId" name="NiveauId" required>
+                                        <option value="">Sélectionner un niveau</option>
+                                        @foreach (var niveau in ViewBag.NiveauList)
+                                        {
+                                            <option value="@niveau.Value">@niveau.Text</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="etudiantSpecialiteId" class="form-label">Spécialité <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="etudiantSpecialiteId" name="SpecialiteId" required>
+                                        <option value="">Sélectionner une spécialité</option>
+                                        @foreach (var specialite in ViewBag.SpecialiteList)
+                                        {
+                                            <option value="@specialite.Value">@specialite.Text</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check-circle me-2"></i>Enregistrer
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- Formulaire Enseignant -->
+                    <div class="tab-pane fade" id="enseignant-tab-pane" role="tabpanel" aria-labelledby="enseignant-tab" tabindex="0">
+                        <form id="enseignantForm" asp-action="CreateEnseignant" method="post">
+                            <input type="hidden" id="enseignantId" name="Id" value="0">
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="enseignantNom" class="form-label">Nom <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="enseignantNom" name="Nom" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="enseignantPrenom" class="form-label">Prénom <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="enseignantPrenom" name="Prenom" required>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="enseignantEmail" class="form-label">Email <span class="text-danger">*</span></label>
+                                    <input type="email" class="form-control" id="enseignantEmail" name="Email" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="enseignantTelephone" class="form-label">Téléphone</label>
+                                    <input type="tel" class="form-control" id="enseignantTelephone" name="Telephone">
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="enseignantEmailInstitutionnel" class="form-label">Email Institutionnel</label>
+                                    <input type="email" class="form-control" id="enseignantEmailInstitutionnel" name="EmailInstitutionnel" readonly>
+                                    <div class="form-text">Généré automatiquement au format prenom.nom@isj.org</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="enseignantUsername" class="form-label">Nom d'utilisateur</label>
+                                    <input type="text" class="form-control" id="enseignantUsername" name="Username" readonly>
+                                    <div class="form-text">Généré automatiquement au format prenom.nom</div>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <label for="enseignantSpecialite" class="form-label">Spécialité</label>
+                                    <input type="text" class="form-control" id="enseignantSpecialite" name="Specialite">
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check-circle me-2"></i>Enregistrer
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour réinitialiser le mot de passe -->
+<div class="modal fade" id="passwordModal" tabindex="-1" aria-labelledby="passwordModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="passwordModalLabel">Réinitialiser le mot de passe</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="passwordForm" asp-action="ResetPassword" method="post">
+                    <input type="hidden" id="passwordUserId" name="userId">
+                    
+                    <div class="mb-3">
+                        <label for="newPassword" class="form-label">Nouveau mot de passe <span class="text-danger">*</span></label>
+                        <input type="password" class="form-control" id="newPassword" name="newPassword" required>
+                        <div class="form-text">Le mot de passe doit contenir au moins 6 caractères.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="confirmPassword" class="form-label">Confirmer le mot de passe <span class="text-danger">*</span></label>
+                        <input type="password" class="form-control" id="confirmPassword" required>
+                        <div class="invalid-feedback">
+                            Les mots de passe ne correspondent pas.
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle me-2"></i>Réinitialiser
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-white">
+                <h5 class="modal-title" id="confirmModalLabel">Confirmation</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmMessage">Êtes-vous sûr de vouloir effectuer cette action ?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-warning" id="confirmActionBtn">Confirmer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Générer automatiquement le nom d'utilisateur et l'email institutionnel
+            function generateUserDetails(prenom, nom) {
+                if (!prenom || !nom) return { username: '', email: '' };
+                
+                // Normaliser les chaînes : minuscules, sans accents, sans espaces
+                const normalizedPrenom = prenom.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '');
+                const normalizedNom = nom.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '');
+                
+                const username = `${normalizedPrenom}.${normalizedNom}`;
+                const email = `${username}@@isj.org`;
+                
+                return { username, email };
+            }
+            
+            // Mettre à jour les champs générés automatiquement
+            function updateUserDetails(prenomInput, nomInput, usernameInput, emailInput) {
+                const prenom = prenomInput.value.trim();
+                const nom = nomInput.value.trim();
+                
+                if (prenom && nom) {
+                    const { username, email } = generateUserDetails(prenom, nom);
+                    usernameInput.value = username;
+                    emailInput.value = email;
+                } else {
+                    usernameInput.value = '';
+                    emailInput.value = '';
+                }
+            }
+            
+            // Configuration pour le formulaire étudiant
+            const etudiantPrenom = document.getElementById('etudiantPrenom');
+            const etudiantNom = document.getElementById('etudiantNom');
+            const etudiantUsername = document.getElementById('etudiantUsername');
+            const etudiantEmailInstitutionnel = document.getElementById('etudiantEmailInstitutionnel');
+            
+            if (etudiantPrenom && etudiantNom && etudiantUsername && etudiantEmailInstitutionnel) {
+                etudiantPrenom.addEventListener('input', () => {
+                    updateUserDetails(etudiantPrenom, etudiantNom, etudiantUsername, etudiantEmailInstitutionnel);
+                });
+                
+                etudiantNom.addEventListener('input', () => {
+                    updateUserDetails(etudiantPrenom, etudiantNom, etudiantUsername, etudiantEmailInstitutionnel);
+                });
+            }
+            
+            // Configuration pour le formulaire enseignant
+            const enseignantPrenom = document.getElementById('enseignantPrenom');
+            const enseignantNom = document.getElementById('enseignantNom');
+            const enseignantUsername = document.getElementById('enseignantUsername');
+            const enseignantEmailInstitutionnel = document.getElementById('enseignantEmailInstitutionnel');
+            
+            if (enseignantPrenom && enseignantNom && enseignantUsername && enseignantEmailInstitutionnel) {
+                enseignantPrenom.addEventListener('input', () => {
+                    updateUserDetails(enseignantPrenom, enseignantNom, enseignantUsername, enseignantEmailInstitutionnel);
+                });
+                
+                enseignantNom.addEventListener('input', () => {
+                    updateUserDetails(enseignantPrenom, enseignantNom, enseignantUsername, enseignantEmailInstitutionnel);
+                });
+            }
+
+            // Réinitialiser le formulaire à la fermeture de la modal
+            document.getElementById('userModal').addEventListener('hidden.bs.modal', function() {
+                document.getElementById('etudiantForm').reset();
+                document.getElementById('enseignantForm').reset();
+                document.getElementById('etudiantId').value = '0';
+                document.getElementById('enseignantId').value = '0';
+                document.getElementById('userModalLabel').textContent = 'Ajouter un utilisateur';
+                
+                // Réinitialiser les onglets
+                document.getElementById('etudiant-tab').classList.add('active');
+                document.getElementById('enseignant-tab').classList.remove('active');
+                document.getElementById('etudiant-tab-pane').classList.add('show', 'active');
+                document.getElementById('enseignant-tab-pane').classList.remove('show', 'active');
+            });
+
+            // Gérer l'édition
+            document.querySelectorAll('.edit-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const userId = this.getAttribute('data-id');
+                    const userType = this.getAttribute('data-type');
+                    
+                    // Récupérer les détails de l'utilisateur
+                    fetch(`/Admin/UserManagement/Account/GetUserDetails/${userId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.type === 'Etudiant') {
+                                // Activer l'onglet étudiant
+                                document.getElementById('etudiant-tab').click();
+                                
+                                // Remplir le formulaire étudiant
+                                document.getElementById('etudiantId').value = data.user.id;
+                                document.getElementById('etudiantNom').value = data.user.nom;
+                                document.getElementById('etudiantPrenom').value = data.user.prenom;
+                                document.getElementById('etudiantEmail').value = data.user.email;
+                                document.getElementById('etudiantTelephone').value = data.user.telephone || '';
+                                document.getElementById('etudiantEmailInstitutionnel').value = data.user.emailInstitutionnel || '';
+                                document.getElementById('etudiantUsername').value = data.user.username || '';
+                                document.getElementById('etudiantCycleId').value = data.user.cycleId || '';
+                                document.getElementById('etudiantNiveauId').value = data.user.niveauId || '';
+                                document.getElementById('etudiantSpecialiteId').value = data.user.specialiteId || '';
+                                
+                                // Changer l'action du formulaire
+                                document.getElementById('etudiantForm').setAttribute('action', '/Admin/UserManagement/Account/UpdateEtudiant');
+                                document.getElementById('userModalLabel').textContent = 'Modifier un étudiant';
+                            } else if (data.type === 'Enseignant') {
+                                // Activer l'onglet enseignant
+                                document.getElementById('enseignant-tab').click();
+                                
+                                // Remplir le formulaire enseignant
+                                document.getElementById('enseignantId').value = data.user.id;
+                                document.getElementById('enseignantNom').value = data.user.nom;
+                                document.getElementById('enseignantPrenom').value = data.user.prenom;
+                                document.getElementById('enseignantEmail').value = data.user.email;
+                                document.getElementById('enseignantTelephone').value = data.user.telephone || '';
+                                document.getElementById('enseignantEmailInstitutionnel').value = data.user.emailInstitutionnel || '';
+                                document.getElementById('enseignantUsername').value = data.user.username || '';
+                                document.getElementById('enseignantSpecialite').value = data.user.specialite || '';
+                                
+                                // Changer l'action du formulaire
+                                document.getElementById('enseignantForm').setAttribute('action', '/Admin/UserManagement/Account/UpdateEnseignant');
+                                document.getElementById('userModalLabel').textContent = 'Modifier un enseignant';
+                            }
+                            
+                            // Ouvrir la modal
+                            const modal = new bootstrap.Modal(document.getElementById('userModal'));
+                            modal.show();
+                        })
+                        .catch(error => {
+                            alert('Erreur lors de la récupération des détails de l\'utilisateur: ' + error.message);
+                        });
+                });
+            });
+
+            // Gérer la désactivation
+            document.querySelectorAll('.deactivate-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const userId = this.getAttribute('data-id');
+                    const userName = this.getAttribute('data-name');
+                    
+                    document.getElementById('confirmMessage').textContent = `Êtes-vous sûr de vouloir désactiver l'utilisateur ${userName} ?`;
+                    
+                    document.getElementById('confirmActionBtn').onclick = function() {
+                        // Créer un formulaire pour soumettre la demande
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = `/Admin/UserManagement/Account/DeactivateUser/${userId}`;
+                        
+                        // Ajouter le token anti-CSRF
+                        const token = document.querySelector('input[name="__RequestVerificationToken"]');
+                        if (token) {
+                            const tokenInput = document.createElement('input');
+                            tokenInput.type = 'hidden';
+                            tokenInput.name = '__RequestVerificationToken';
+                            tokenInput.value = token.value;
+                            form.appendChild(tokenInput);
+                        }
+                        
+                        document.body.appendChild(form);
+                        form.submit();
+                    };
+                    
+                    const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
+                    modal.show();
+                });
+            });
+
+            // Gérer l'activation
+            document.querySelectorAll('.activate-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const userId = this.getAttribute('data-id');
+                    const userName = this.getAttribute('data-name');
+                    
+                    document.getElementById('confirmMessage').textContent = `Êtes-vous sûr de vouloir activer l'utilisateur ${userName} ?`;
+                    
+                    document.getElementById('confirmActionBtn').onclick = function() {
+                        // Créer un formulaire pour soumettre la demande
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = `/Admin/UserManagement/Account/ActivateUser/${userId}`;
+                        
+                        // Ajouter le token anti-CSRF
+                        const token = document.querySelector('input[name="__RequestVerificationToken"]');
+                        if (token) {
+                            const tokenInput = document.createElement('input');
+                            tokenInput.type = 'hidden';
+                            tokenInput.name = '__RequestVerificationToken';
+                            tokenInput.value = token.value;
+                            form.appendChild(tokenInput);
+                        }
+                        
+                        document.body.appendChild(form);
+                        form.submit();
+                    };
+                    
+                    const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
+                    modal.show();
+                });
+            });
+
+            // Gérer la réinitialisation du mot de passe
+            document.querySelectorAll('.password-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const userId = this.getAttribute('data-id');
+                    const userName = this.getAttribute('data-name');
+                    
+                    document.getElementById('passwordModalLabel').textContent = `Réinitialiser le mot de passe de ${userName}`;
+                    document.getElementById('passwordUserId').value = userId;
+                    document.getElementById('newPassword').value = '';
+                    document.getElementById('confirmPassword').value = '';
+                    document.getElementById('confirmPassword').classList.remove('is-invalid');
+                    
+                    const modal = new bootstrap.Modal(document.getElementById('passwordModal'));
+                    modal.show();
+                });
+            });
+
+            // Validation du mot de passe
+            document.getElementById('confirmPassword').addEventListener('input', function() {
+                const password = document.getElementById('newPassword').value;
+                const confirmPassword = this.value;
+                
+                if (password !== confirmPassword) {
+                    this.classList.add('is-invalid');
+                } else {
+                    this.classList.remove('is-invalid');
+                }
+            });
+
+            // Gérer la suppression
+            document.querySelectorAll('.delete-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const userId = this.getAttribute('data-id');
+                    const userName = this.getAttribute('data-name');
+                    
+                    document.getElementById('confirmMessage').textContent = `Êtes-vous sûr de vouloir supprimer l'utilisateur ${userName} ? Cette action est irréversible.`;
+                    
+                    document.getElementById('confirmActionBtn').onclick = function() {
+                        // Créer un formulaire pour soumettre la demande
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = `/Admin/UserManagement/Account/DeleteUser/${userId}`;
+                        
+                        // Ajouter le token anti-CSRF
+                        const token = document.querySelector('input[name="__RequestVerificationToken"]');
+                        if (token) {
+                            const tokenInput = document.createElement('input');
+                            tokenInput.type = 'hidden';
+                            tokenInput.name = '__RequestVerificationToken';
+                            tokenInput.value = token.value;
+                            form.appendChild(tokenInput);
+                        }
+                        
+                        document.body.appendChild(form);
+                        form.submit();
+                    };
+                    
+                    const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
+                    modal.show();
+                });
+            });
+
+            // Filtrage du tableau
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('keyup', function() {
+                const searchTerm = this.value.toLowerCase();
+                const rows = document.querySelectorAll('#usersTable tbody tr');
+                
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    row.style.display = text.includes(searchTerm) ? '' : 'none';
+                });
+            });
+        });
+    </script>
+}
