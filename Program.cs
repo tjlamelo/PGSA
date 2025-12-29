@@ -1,5 +1,6 @@
 using PGSA_Licence3.Data;
 using PGSA_Licence3.Services.UserManagement;
+using PGSA_Licence3.Services.CahierDeTexte;
 using Microsoft.EntityFrameworkCore;
 using PGSA_Licence3.Models.Seeders;
  
@@ -16,8 +17,10 @@ builder.Services.AddControllersWithViews()
        .AddRazorRuntimeCompilation();
 
 // Services for user and permission management
-builder.Services.AddScoped<SaveUserService>();
-builder.Services.AddScoped<PermissionService>();
+// builder.Services.AddScoped<SaveUserService>();
+// builder.Services.AddScoped<PermissionService>();
+// Cahier de texte service
+builder.Services.AddScoped<CahierDeTexteService>();
 
 var app = builder.Build();
 
