@@ -1,4 +1,5 @@
 using PGSA_Licence3.Data;
+using PGSA_Licence3.Services.UserManagement;
 using Microsoft.EntityFrameworkCore;
 using PGSA_Licence3.Models.Seeders;
  
@@ -13,6 +14,10 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // 🔹 Ajouter les controllers avec Razor Runtime Compilation
 builder.Services.AddControllersWithViews()
        .AddRazorRuntimeCompilation();
+
+// Services for user and permission management
+builder.Services.AddScoped<SaveUserService>();
+builder.Services.AddScoped<PermissionService>();
 
 var app = builder.Build();
 
