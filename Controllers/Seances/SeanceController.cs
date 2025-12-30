@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using PGSA_Licence3.Models;
-using PGSA_Licence3.Services;
+using PGSA_Licence3.Services.Seances;
 using PGSA_Licence3.Data;
 
 namespace PGSA_Licence3.Controllers.Seances
@@ -20,11 +20,7 @@ namespace PGSA_Licence3.Controllers.Seances
         public async Task<IActionResult> Index()
         {
             var seances = await _seanceService.GetAllAsync();
-            ViewBag.Cours = await _seanceService.GetCoursAsync();
-            ViewBag.Groupes = await _seanceService.GetGroupesAsync();
-            ViewBag.Cycles = await _seanceService.GetCyclesAsync();
-            ViewBag.Niveaux = await _seanceService.GetNiveauxAsync();
-            ViewBag.Specialites = await _seanceService.GetSpecialitesAsync();
+            await LoadDropdowns();
             return View("~/Views/User/Staff/Seance.cshtml", seances);
         }
 
@@ -36,11 +32,7 @@ namespace PGSA_Licence3.Controllers.Seances
             if (!ModelState.IsValid)
             {
                 TempData["Error"] = "Formulaire invalide. Veuillez vérifier vos champs.";
-                ViewBag.Cours = await _seanceService.GetCoursAsync();
-                ViewBag.Groupes = await _seanceService.GetGroupesAsync();
-                ViewBag.Cycles = await _seanceService.GetCyclesAsync();
-                ViewBag.Niveaux = await _seanceService.GetNiveauxAsync();
-                ViewBag.Specialites = await _seanceService.GetSpecialitesAsync();
+                await LoadDropdowns();
                 var seances = await _seanceService.GetAllAsync();
                 return View("~/Views/User/Staff/Seance.cshtml", seances);
             }
@@ -55,11 +47,7 @@ namespace PGSA_Licence3.Controllers.Seances
                 TempData["Error"] = ex.Message;
             }
 
-            ViewBag.Cours = await _seanceService.GetCoursAsync();
-            ViewBag.Groupes = await _seanceService.GetGroupesAsync();
-            ViewBag.Cycles = await _seanceService.GetCyclesAsync();
-            ViewBag.Niveaux = await _seanceService.GetNiveauxAsync();
-            ViewBag.Specialites = await _seanceService.GetSpecialitesAsync();
+            await LoadDropdowns();
             var allSeances = await _seanceService.GetAllAsync();
             return View("~/Views/User/Staff/Seance.cshtml", allSeances);
         }
@@ -79,12 +67,34 @@ namespace PGSA_Licence3.Controllers.Seances
             }
 
             var seances = await _seanceService.GetAllAsync();
+            await LoadDropdowns();
+            return View("~/Views/User/Staff/Seance.cshtml", seances);
+        }
+
+        // Vérification des conflits (AJAX)
+        [HttpPost("CheckConflict")]
+        public async Task<JsonResult> CheckConflict(Seance seance)
+        {
+            try
+            {
+                var conflicts = await _seanceService.CheckConflictAsync(seance);
+                return Json(new { success = true, conflicts = conflicts });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        // Méthode helper pour remplir ViewBag
+        private async Task LoadDropdowns()
+        {
             ViewBag.Cours = await _seanceService.GetCoursAsync();
             ViewBag.Groupes = await _seanceService.GetGroupesAsync();
             ViewBag.Cycles = await _seanceService.GetCyclesAsync();
             ViewBag.Niveaux = await _seanceService.GetNiveauxAsync();
             ViewBag.Specialites = await _seanceService.GetSpecialitesAsync();
-            return View("~/Views/User/Staff/Seance.cshtml", seances);
+            ViewBag.Salles = await _seanceService.GetSallesAsync();
         }
     }
 }

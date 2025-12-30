@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PGSA_Licence3.Data;
 
@@ -11,9 +12,11 @@ using PGSA_Licence3.Data;
 namespace PGSA_Licence3.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251229155525_AddDureeToSeances")]
+    partial class AddDureeToSeances
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,21 +24,6 @@ namespace PGSA_Licence3.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
-
-            modelBuilder.Entity("EtudiantGroupe", b =>
-                {
-                    b.Property<int>("EtudiantsId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("GroupesId")
-                        .HasColumnType("int");
-
-                    b.HasKey("EtudiantsId", "GroupesId");
-
-                    b.HasIndex("GroupesId");
-
-                    b.ToTable("EtudiantGroupes", (string)null);
-                });
 
             modelBuilder.Entity("PGSA_Licence3.Models.Assiduite", b =>
                 {
@@ -726,6 +714,9 @@ namespace PGSA_Licence3.Migrations
                     b.Property<DateTime>("DateInscription")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<int?>("GroupeId")
+                        .HasColumnType("int");
+
                     b.Property<int>("NiveauId")
                         .HasColumnType("int");
 
@@ -734,26 +725,13 @@ namespace PGSA_Licence3.Migrations
 
                     b.HasIndex("CycleId");
 
+                    b.HasIndex("GroupeId");
+
                     b.HasIndex("NiveauId");
 
                     b.HasIndex("SpecialiteId");
 
                     b.HasDiscriminator().HasValue("Etudiant");
-                });
-
-            modelBuilder.Entity("EtudiantGroupe", b =>
-                {
-                    b.HasOne("PGSA_Licence3.Models.Etudiant", null)
-                        .WithMany()
-                        .HasForeignKey("EtudiantsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("PGSA_Licence3.Models.Groupe", null)
-                        .WithMany()
-                        .HasForeignKey("GroupesId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("PGSA_Licence3.Models.Assiduite", b =>
@@ -959,6 +937,11 @@ namespace PGSA_Licence3.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("PGSA_Licence3.Models.Groupe", null)
+                        .WithMany("Etudiants")
+                        .HasForeignKey("GroupeId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("PGSA_Licence3.Models.Niveau", "Niveau")
                         .WithMany()
                         .HasForeignKey("NiveauId")
@@ -985,6 +968,8 @@ namespace PGSA_Licence3.Migrations
 
             modelBuilder.Entity("PGSA_Licence3.Models.Groupe", b =>
                 {
+                    b.Navigation("Etudiants");
+
                     b.Navigation("Seances");
                 });
 

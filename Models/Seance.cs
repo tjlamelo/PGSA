@@ -4,59 +4,61 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PGSA_Licence3.Models
 {
-  public class Seance
-{
-    [Key]
-    public int Id { get; set; }
+    public class Seance
+    {
+        [Key]
+        public int Id { get; set; }
 
-    [Required]
-    public int CoursId { get; set; }
-    [ForeignKey("CoursId")]
-    public Cours? Cours { get; set; }
+        [Required]
+        public int CoursId { get; set; }
+        [ForeignKey("CoursId")]
+        public Cours? Cours { get; set; }
 
-    public int? GroupeId { get; set; }
-    [ForeignKey("GroupeId")]
-    public Groupe? Groupe { get; set; }
+        public int? GroupeId { get; set; }
+        [ForeignKey("GroupeId")]
+        public Groupe? Groupe { get; set; }
 
-    // 🔹 Nouveau nom : Cycle (Licence / Master / Ingenieur)
-    public int? CycleId { get; set; }
-    [ForeignKey("CycleId")]
-    public Cycle? Cycle { get; set; }
+        // 🔹 Nouveau nom : Cycle (Licence / Master / Ingenieur)
+        public int? CycleId { get; set; }
+        [ForeignKey("CycleId")]
+        public Cycle? Cycle { get; set; }
 
-    // 🔹 Nouveau nom : Niveau (1, 2, 3, 4, 5)
-    public int? NiveauId { get; set; }
-    [ForeignKey("NiveauId")]
-    public Niveau? Niveau { get; set; }
+        // 🔹 Nouveau nom : Niveau (1, 2, 3, 4, 5)
+        public int? NiveauId { get; set; }
+        [ForeignKey("NiveauId")]
+        public Niveau? Niveau { get; set; }
 
-    // 🔹 Nouveau nom : Specialite (ISI / SRT / GC / etc.)
-    public int? SpecialiteId { get; set; }
-    [ForeignKey("SpecialiteId")]
-    public Specialite? Specialite { get; set; }
+        // 🔹 Nouveau nom : Specialite (ISI / SRT / GC / etc.)
+        public int? SpecialiteId { get; set; }
+        [ForeignKey("SpecialiteId")]
+        public Specialite? Specialite { get; set; }
 
-    [Required]
-    public DateTime DateHeureDebut { get; set; }
+        [Required]
+        public DateTime DateHeureDebut { get; set; }
 
-    [Required]
-    public DateTime DateHeureFin { get; set; }
+        [Required]
+        public DateTime DateHeureFin { get; set; }
 
-    [Required]
-    [MaxLength(50)]
-    public required string Salle { get; set; }
+        [Required]
+        [MaxLength(50)]
+        public required string Salle { get; set; }
 
-    [Required]
-    [MaxLength(20)]
-    public required string Type { get; set; }
+        [Required]
+        [MaxLength(20)]
+        public required string Type { get; set; }
+        [Required]
+        public DureeSeance Duree { get; set; } = DureeSeance.QuatreHeures; // valeur par défaut 4h
 
-    [Required]
-    public StatutSeance Statut { get; set; } = StatutSeance.Planifiee;
+        [Required]
+        public StatutSeance Statut { get; set; } = StatutSeance.Planifiee;
 
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public DateTime? UpdatedAt { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? UpdatedAt { get; set; }
 
-    public ICollection<Assiduite>? Assiduites { get; set; } = new List<Assiduite>();
-    public CahierDeTexte? CahierDeTexte { get; set; }
-    public ICollection<ValidationSeance>? Validations { get; set; } = new List<ValidationSeance>();
-}
+        public ICollection<Assiduite>? Assiduites { get; set; } = new List<Assiduite>();
+        public CahierDeTexte? CahierDeTexte { get; set; }
+        public ICollection<ValidationSeance>? Validations { get; set; } = new List<ValidationSeance>();
+    }
 
 
     public enum StatutSeance
@@ -66,4 +68,16 @@ namespace PGSA_Licence3.Models
         Terminee,
         Annulee
     }
+    public enum DureeSeance
+{
+    UneHeure = 1,
+    DeuxHeures = 2,
+    TroisHeures = 3,
+    QuatreHeures = 4,
+    CinqHeures = 5,
+    SixHeures = 6,
+    SeptHeures = 7,
+    HuitHeures = 8
+}
+
 }

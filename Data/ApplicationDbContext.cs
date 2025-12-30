@@ -33,7 +33,7 @@ namespace PGSA_Licence3.Data
         public DbSet<Cycle> Cycles { get; set; }
         public DbSet<Niveau> Niveaux { get; set; }
         public DbSet<Specialite> Specialites { get; set; }
-        
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -65,10 +65,12 @@ namespace PGSA_Licence3.Data
                     j => j.ToTable("RolePermissions"));
 
             // Configuration des relations un-à-plusieurs
-            modelBuilder.Entity<Groupe>()
-                .HasMany(g => g.Etudiants)
-                .WithOne()
-                .OnDelete(DeleteBehavior.Restrict);
+            // Configuration de la relation many-to-many Etudiant <-> Groupe
+            modelBuilder.Entity<Etudiant>()
+                .HasMany(e => e.Groupes)
+                .WithMany(g => g.Etudiants)
+                .UsingEntity(j => j.ToTable("EtudiantGroupes"));
+
 
             modelBuilder.Entity<Groupe>()
                 .HasMany(g => g.Seances)

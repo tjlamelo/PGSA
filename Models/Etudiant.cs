@@ -27,6 +27,6 @@ namespace PGSA_Licence3.Models
  
         public DateTime DateInscription { get; set; } = DateTime.UtcNow;
   
-
+        public ICollection<Groupe>? Groupes { get; set; } = new List<Groupe>();
     }
 }

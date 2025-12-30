@@ -1,0 +1,271 @@
+@model List<PGSA_Licence3.Models.CahierDeTexte>
+@{
+    ViewData["Title"] = "Gestion des Cahiers de Texte";
+    ViewData["Breadcrumb"] = new List<(string Text, string Url)>
+{
+("Gérer les cahiers de texte", "/CahierDeTexte")
+};
+    Layout = "_DashboardLayout";
+}
+
+<div class="container-fluid mt-4 fade-in">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Gestion des Cahiers de Texte</h2>
+        <button type="button" class="btn btn-primary" id="createCahierBtn">
+            <i class="bi bi-plus-circle me-2"></i>Rédiger un cahier de texte
+        </button>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">Liste des Cahiers de Texte</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped" id="cahiersTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Séance</th>
+                            <th>Cours</th>
+                            <th>Date</th>
+                            <th>Objectifs Pédagogiques</th>
+                            <th>Activités Réalisées</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            @foreach (var cahier in Model)
+                            {
+                                <tr>
+                                    <td>@cahier.Id</td>
+                                    <td>
+                                        <a href="#" title="Voir les détails de la séance">
+                                            Séance du @cahier.Seance?.DateHeureDebut.ToString("dd/MM/yyyy HH:mm")
+                                        </a>
+                                    </td>
+                                    <td>@cahier.Seance?.Cours?.Nom</td>
+                                    <td>@cahier.CreatedAt.ToString("dd/MM/yyyy")</td>
+                                    <td>@cahier.ObjectifsPedagogiques</td>
+                                    <td>@cahier.ActivitesRealisees</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-sm btn-outline-primary edit-btn"
+                                                data-id="@cahier.Id">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <a href="@Url.Action("Delete", "CahierDeTexte", new { id = cahier.Id })"
+                                                class="btn btn-sm btn-outline-danger"
+                                                onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce cahier de texte ?');">
+                                                <i class="bi bi-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="7" class="text-center">Aucun cahier de texte trouvé.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour créer/éditer un cahier de texte -->
+<div class="modal fade" id="cahierDeTexteModal" tabindex="-1" aria-labelledby="cahierDeTexteModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form asp-action="Save" method="post" id="cahierForm">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cahierDeTexteModalLabel">Rédiger un cahier de texte</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="cahierId" name="Id" value="0">
+
+                    <div class="mb-3">
+                        <label for="SeanceId" class="form-label">Séance concernée <span
+                                class="text-danger">*</span></label>
+                        <select class="form-select" id="SeanceId" name="SeanceId" required>
+                            <option value="">Sélectionner une séance</option>
+                            @if (ViewBag.Seances != null)
+                            {
+                                @foreach (var seance in ViewBag.Seances)
+                                {
+                                    <option value="@seance.Id">
+                                        @seance.Cours?.Nom - @seance.DateHeureDebut.ToString("dd/MM/yyyy HH:mm") (@seance.Salle)
+                                    </option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="ObjectifsPedagogiques" class="form-label">Objectifs Pédagogiques <span
+                                class="text-danger">*</span></label>
+                        <textarea class="form-control" id="ObjectifsPedagogiques" name="ObjectifsPedagogiques" rows="3"
+                            required></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="ActivitesRealisees" class="form-label">Activités Réalisées <span
+                                class="text-danger">*</span></label>
+                        <textarea class="form-control" id="ActivitesRealisees" name="ActivitesRealisees" rows="4"
+                            required></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="RessourcesUtilisees" class="form-label">Ressources Utilisées</label>
+                        <input type="text" class="form-control" id="RessourcesUtilisees" name="RessourcesUtilisees"
+                            placeholder="Ex: Tableau blanc, Vidéoprojecteur, Polycopié...">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="TravauxAFaire" class="form-label">Travaux à Faire</label>
+                        <textarea class="form-control" id="TravauxAFaire" name="TravauxAFaire" rows="3"
+                            placeholder="Ex: Exercices p. 25-26, Préparer le chapitre suivant..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary" id="saveBtn">
+                        <i class="bi bi-check-circle me-2"></i>Enregistrer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const createBtn = document.getElementById('createCahierBtn');
+            const editBtns = document.querySelectorAll('.edit-btn');
+            const cahierForm = document.getElementById('cahierForm');
+            const modalTitle = document.getElementById('cahierDeTexteModalLabel');
+            const cahierModal = new bootstrap.Modal(document.getElementById('cahierDeTexteModal'));
+
+            // --- GESTION DE L'OUVERTURE AUTOMATIQUE LORS DU CHARGEMENT ---
+            // Sérialisation directe de la valeur ViewBag en JavaScript.
+            // C'est la méthode la plus simple et la plus fiable.
+            const initialSeanceId = @Json.Serialize(ViewBag.InitialSeanceId);
+
+            // Si un seanceId a été fourni dans l'URL...
+            if (initialSeanceId) {
+                // 1. Définit le titre du modal pour la création
+                modalTitle.textContent = 'Rédiger un cahier de texte';
+                
+                // 2. Ouvre le modal
+                cahierModal.show();
+
+                // 3. Pré-remplit automatiquement le champ "Séance concernée"
+                document.getElementById('SeanceId').value = initialSeanceId;
+
+                // 4. Vérifie si un cahier de texte existe déjà pour cette séance
+                fetch(`/CahierDeTexte/GetBySeanceIdJson/${initialSeanceId}`)
+                    .then(response => {
+                        if (response.ok) {
+                            return response.json();
+                        }
+                        return null; 
+                    })
+                    .then(data => {
+                        if (data) {
+                            document.getElementById('cahierId').value = data.id;
+                            document.getElementById('ObjectifsPedagogiques').value = data.objectifsPedagogiques;
+                            document.getElementById('ActivitesRealisees').value = data.activitesRealisees;
+                            document.getElementById('RessourcesUtilisees').value = data.ressourcesUtilisees || '';
+                            document.getElementById('TravauxAFaire').value = data.travauxAFaire || '';
+                            modalTitle.textContent = 'Modifier un cahier de texte';
+                        }
+                    });
+            }
+
+            // --- GESTION DE LA CRÉATION (bouton principal de la page) ---
+            createBtn.addEventListener('click', function () {
+                cahierForm.reset();
+                document.getElementById('cahierId').value = '0';
+                modalTitle.textContent = 'Rédiger un cahier de texte';
+                cahierModal.show();
+            });
+
+            // --- GESTION DE L'ÉDITION (boutons dans le tableau de la liste) ---
+            editBtns.forEach(button => {
+                button.addEventListener('click', function () {
+                    const id = this.getAttribute('data-id');
+                    fetch(`/CahierDeTexte/GetByIdJson/${id}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            document.getElementById('cahierId').value = data.id;
+                            document.getElementById('SeanceId').value = data.seanceId;
+                            document.getElementById('ObjectifsPedagogiques').value = data.objectifsPedagogiques;
+                            document.getElementById('ActivitesRealisees').value = data.activitesRealisees;
+                            document.getElementById('RessourcesUtilisees').value = data.ressourcesUtilisees || '';
+                            document.getElementById('TravauxAFaire').value = data.travauxAFaire || '';
+                            modalTitle.textContent = 'Modifier un cahier de texte';
+                            cahierModal.show();
+                        })
+                        .catch(error => {
+                            console.error('Erreur:', error);
+                            alert('Impossible de charger les données du cahier de texte.');
+                        });
+                });
+            });
+
+            // --- GESTION DE LA SOUMISSION DU FORMULAIRE (AJAX) ---
+            cahierForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+                const formData = new FormData(cahierForm);
+                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+                fetch('/CahierDeTexte/Save', {
+                    method: 'POST',
+                    headers: { 'RequestVerificationToken': token },
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        alert(result.message);
+                        cahierModal.hide();
+                        
+                        // On redirige vers l'URL de base pour nettoyer l'URL
+                        window.location.href = '/CahierDeTexte';
+                    } else {
+                        alert('Erreur : ' + result.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    alert('Une erreur inattendue est survenue.');
+                });
+            });
+        });
+    </script>
+}

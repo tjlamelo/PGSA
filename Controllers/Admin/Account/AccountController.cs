@@ -29,17 +29,17 @@ namespace PGSA_Licence3.Controllers.Admin.Account
         {
             // Récupérer tous les utilisateurs avec leurs détails
             var users = await _accountService.GetAllUsersAsync();
-            
+
             // Récupérer les données de référence pour les formulaires
             ViewBag.Cycles = await _accountService.GetCyclesAsync();
             ViewBag.Niveaux = await _accountService.GetNiveauxAsync();
             ViewBag.Specialites = await _accountService.GetSpecialitesAsync();
-            
+
             // Préparer les listes pour les dropdowns
             ViewBag.CycleList = new SelectList(await _accountService.GetCyclesAsync(), "Id", "NomCycle");
             ViewBag.NiveauList = new SelectList(await _accountService.GetNiveauxAsync(), "Id", "NomNiveau");
             ViewBag.SpecialiteList = new SelectList(await _accountService.GetSpecialitesAsync(), "Id", "NomSpecialite");
-            
+
             return View("~/Views/Admin/UserManagement/Account.cshtml", users);
         }
 
@@ -49,7 +49,7 @@ namespace PGSA_Licence3.Controllers.Admin.Account
             // Normaliser les chaînes : minuscules, sans accents, sans espaces
             string normalizedPrenom = RemoveAccents(prenom.ToLowerInvariant()).Replace(" ", "");
             string normalizedNom = RemoveAccents(nom.ToLowerInvariant()).Replace(" ", "");
-            
+
             return $"{normalizedPrenom}.{normalizedNom}@isj.org";
         }
 
@@ -58,7 +58,7 @@ namespace PGSA_Licence3.Controllers.Admin.Account
         {
             var normalizedString = text.Normalize(NormalizationForm.FormD);
             var stringBuilder = new StringBuilder();
-            
+
             foreach (var c in normalizedString)
             {
                 var unicodeCategory = CharUnicodeInfo.GetUnicodeCategory(c);
@@ -67,87 +67,87 @@ namespace PGSA_Licence3.Controllers.Admin.Account
                     stringBuilder.Append(c);
                 }
             }
-            
+
             return stringBuilder.ToString().Normalize(NormalizationForm.FormC);
         }
-// Création d'un étudiant
-[HttpPost("CreateEtudiant")]
-[ValidateAntiForgeryToken]
-public async Task<IActionResult> CreateEtudiant(Etudiant etudiant)
-{
-    try
-    {
-                 ModelState.Remove("MotDePasseHash");
- 
-        if (ModelState.IsValid)
+        // Création d'un étudiant
+        [HttpPost("CreateEtudiant")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateEtudiant(Etudiant etudiant)
         {
-            // Générer l'email institutionnel
-            etudiant.EmailInstitutionnel = GenerateEmailInstitutionnel(etudiant.Prenom, etudiant.Nom);
-            
-            // Utiliser le mot de passe par défaut
-            string password = "Changeme@2025";
-            
-            var newEtudiant = await _accountService.CreateEtudiantAsync(etudiant, password);
-            TempData["Success"] = $"L'étudiant {newEtudiant.Prenom} {newEtudiant.Nom} a été créé avec succès. Nom d'utilisateur: {newEtudiant.Username}, Email: {newEtudiant.EmailInstitutionnel}";
-        }
-        else
-        {
-            // Affiche les erreurs de validation dans TempData
-            var errors = string.Join(" | ", ModelState.Values
-                                            .SelectMany(v => v.Errors)
-                                            .Select(e => e.ErrorMessage));
-            TempData["Error"] = $"Les données fournies sont invalides : {errors}";
-        }
-    }
-    catch (Exception ex)
-    {
-        // Inclut le message, la pile et les inner exceptions
-        string innerEx = ex.InnerException != null ? $" | InnerException: {ex.InnerException.Message}" : "";
-        TempData["Error"] = $"Erreur lors de la création de l'étudiant: {ex.Message}{innerEx}";
-    }
+            try
+            {
+                ModelState.Remove("MotDePasseHash");
 
-    return RedirectToAction(nameof(Index));
-}
+                if (ModelState.IsValid)
+                {
+                    // Générer l'email institutionnel
+                    etudiant.EmailInstitutionnel = GenerateEmailInstitutionnel(etudiant.Prenom, etudiant.Nom);
 
-// Création d'un enseignant
-[HttpPost("CreateEnseignant")]
-[ValidateAntiForgeryToken]
-public async Task<IActionResult> CreateEnseignant(Enseignant enseignant)
-{
-    try
-    {
-    
-         ModelState.Remove("MotDePasseHash");
-        if (ModelState.IsValid)
-        {
-            // Générer l'email institutionnel
-            enseignant.EmailInstitutionnel = GenerateEmailInstitutionnel(enseignant.Prenom, enseignant.Nom);
-            
-            // Utiliser le mot de passe par défaut
-            string password = "Changeme@2025";
-            
-            var newEnseignant = await _accountService.CreateEnseignantAsync(enseignant, password);
-            TempData["Success"] = $"L'enseignant {newEnseignant.Prenom} {newEnseignant.Nom} a été créé avec succès. Nom d'utilisateur: {newEnseignant.Username}, Email: {newEnseignant.EmailInstitutionnel}";
-        }
-        else
-        {
-            // Affiche les erreurs de validation dans TempData
-            var errors = string.Join(" | ", ModelState.Values
-                                            .SelectMany(v => v.Errors)
-                                            .Select(e => e.ErrorMessage));
-            TempData["Error"] = $"Les données fournies sont invalides : {errors}";
-        }
-    }
-    catch (Exception ex)
-    {
-        // Inclut le message, la pile et les inner exceptions
-        string innerEx = ex.InnerException != null ? $" | InnerException: {ex.InnerException.Message}" : "";
-        TempData["Error"] = $"Erreur lors de la création de l'enseignant: {ex.Message}{innerEx}";
-    }
+                    // Utiliser le mot de passe par défaut
+                    string password = "Changeme@2025";
 
-    return RedirectToAction(nameof(Index));
-}
- 
+                    var newEtudiant = await _accountService.CreateEtudiantAsync(etudiant, password);
+                    TempData["Success"] = $"L'étudiant {newEtudiant.Prenom} {newEtudiant.Nom} a été créé avec succès. Nom d'utilisateur: {newEtudiant.Username}, Email: {newEtudiant.EmailInstitutionnel}";
+                }
+                else
+                {
+                    // Affiche les erreurs de validation dans TempData
+                    var errors = string.Join(" | ", ModelState.Values
+                                                    .SelectMany(v => v.Errors)
+                                                    .Select(e => e.ErrorMessage));
+                    TempData["Error"] = $"Les données fournies sont invalides : {errors}";
+                }
+            }
+            catch (Exception ex)
+            {
+                // Inclut le message, la pile et les inner exceptions
+                string innerEx = ex.InnerException != null ? $" | InnerException: {ex.InnerException.Message}" : "";
+                TempData["Error"] = $"Erreur lors de la création de l'étudiant: {ex.Message}{innerEx}";
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        // Création d'un enseignant
+        [HttpPost("CreateEnseignant")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateEnseignant(Enseignant enseignant)
+        {
+            try
+            {
+
+                ModelState.Remove("MotDePasseHash");
+                if (ModelState.IsValid)
+                {
+                    // Générer l'email institutionnel
+                    enseignant.EmailInstitutionnel = GenerateEmailInstitutionnel(enseignant.Prenom, enseignant.Nom);
+
+                    // Utiliser le mot de passe par défaut
+                    string password = "Changeme@2025";
+
+                    var newEnseignant = await _accountService.CreateEnseignantAsync(enseignant, password);
+                    TempData["Success"] = $"L'enseignant {newEnseignant.Prenom} {newEnseignant.Nom} a été créé avec succès. Nom d'utilisateur: {newEnseignant.Username}, Email: {newEnseignant.EmailInstitutionnel}";
+                }
+                else
+                {
+                    // Affiche les erreurs de validation dans TempData
+                    var errors = string.Join(" | ", ModelState.Values
+                                                    .SelectMany(v => v.Errors)
+                                                    .Select(e => e.ErrorMessage));
+                    TempData["Error"] = $"Les données fournies sont invalides : {errors}";
+                }
+            }
+            catch (Exception ex)
+            {
+                // Inclut le message, la pile et les inner exceptions
+                string innerEx = ex.InnerException != null ? $" | InnerException: {ex.InnerException.Message}" : "";
+                TempData["Error"] = $"Erreur lors de la création de l'enseignant: {ex.Message}{innerEx}";
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
         // Mise à jour d'un étudiant
         [HttpPost("UpdateEtudiant")]
         [ValidateAntiForgeryToken]
@@ -155,12 +155,12 @@ public async Task<IActionResult> CreateEnseignant(Enseignant enseignant)
         {
             try
             {
-                         ModelState.Remove("MotDePasseHash");
+                ModelState.Remove("MotDePasseHash");
                 if (ModelState.IsValid)
                 {
                     // Régénérer l'email institutionnel si le nom ou prénom a changé
                     etudiant.EmailInstitutionnel = GenerateEmailInstitutionnel(etudiant.Prenom, etudiant.Nom);
-                    
+
                     var updatedEtudiant = await _accountService.UpdateEtudiantAsync(etudiant);
                     TempData["Success"] = $"Les informations de l'étudiant {updatedEtudiant.Prenom} {updatedEtudiant.Nom} ont été mises à jour. Email institutionnel: {updatedEtudiant.EmailInstitutionnel}";
                 }
@@ -190,12 +190,12 @@ public async Task<IActionResult> CreateEnseignant(Enseignant enseignant)
         {
             try
             {
-                       ModelState.Remove("MotDePasseHash");
+                ModelState.Remove("MotDePasseHash");
                 if (ModelState.IsValid)
                 {
                     // Régénérer l'email institutionnel si le nom ou prénom a changé
                     enseignant.EmailInstitutionnel = GenerateEmailInstitutionnel(enseignant.Prenom, enseignant.Nom);
-                    
+
                     var updatedEnseignant = await _accountService.UpdateEnseignantAsync(enseignant);
                     TempData["Success"] = $"Les informations de l'enseignant {updatedEnseignant.Prenom} {updatedEnseignant.Nom} ont été mises à jour. Email institutionnel: {updatedEnseignant.EmailInstitutionnel}";
                 }
@@ -272,58 +272,58 @@ public async Task<IActionResult> CreateEnseignant(Enseignant enseignant)
             return RedirectToAction(nameof(Index));
         }
 
-       [HttpPost("ResetPassword/{userId}")]
-[ValidateAntiForgeryToken]
-public async Task<IActionResult> ResetPassword(int userId)
-{
-    try
-    {
-        var user = await _accountService.GetUserByIdAsync(userId);
-        if (user == null)
+        [HttpPost("ResetPassword/{userId}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetPassword(int userId)
         {
-            TempData["Error"] = "Utilisateur non trouvé.";
+            try
+            {
+                var user = await _accountService.GetUserByIdAsync(userId);
+                if (user == null)
+                {
+                    TempData["Error"] = "Utilisateur non trouvé.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                await _accountService.ResetPasswordAsync(userId);
+
+                TempData["Success"] =
+                    $"Le mot de passe de {user.Prenom} {user.Nom} a été réinitialisé à Changeme@2026.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Erreur lors de la réinitialisation : {ex.Message}";
+            }
+
             return RedirectToAction(nameof(Index));
         }
-
-        await _accountService.ResetPasswordAsync(userId);
-
-        TempData["Success"] =
-            $"Le mot de passe de {user.Prenom} {user.Nom} a été réinitialisé à Changeme@2026.";
-    }
-    catch (Exception ex)
-    {
-        TempData["Error"] = $"Erreur lors de la réinitialisation : {ex.Message}";
-    }
-
-    return RedirectToAction(nameof(Index));
-}
 
         // Suppression logique d'un utilisateur
-       [HttpPost("DeleteUser/{userId}")]
-[ValidateAntiForgeryToken]
-public async Task<IActionResult> DeleteUser(int userId)
-{
-    try
-    {
-        var user = await _accountService.GetUserByIdAsync(userId);
-        if (user == null)
+        [HttpPost("DeleteUser/{userId}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteUser(int userId)
         {
-            TempData["Error"] = "Utilisateur non trouvé.";
+            try
+            {
+                var user = await _accountService.GetUserByIdAsync(userId);
+                if (user == null)
+                {
+                    TempData["Error"] = "Utilisateur non trouvé.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                await _accountService.DeleteUserAsync(userId);
+
+                TempData["Success"] =
+                    $"L'utilisateur {user.Prenom} {user.Nom} a été supprimé définitivement.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Erreur lors de la suppression : {ex.Message}";
+            }
+
             return RedirectToAction(nameof(Index));
         }
-
-        await _accountService.DeleteUserAsync(userId);
-
-        TempData["Success"] =
-            $"L'utilisateur {user.Prenom} {user.Nom} a été supprimé définitivement.";
-    }
-    catch (Exception ex)
-    {
-        TempData["Error"] = $"Erreur lors de la suppression : {ex.Message}";
-    }
-
-    return RedirectToAction(nameof(Index));
-}
 
         // Obtenir les détails d'un utilisateur pour l'édition
         [HttpGet("GetUserDetails/{userId}")]
@@ -338,9 +338,11 @@ public async Task<IActionResult> DeleteUser(int userId)
             // Déterminer le type d'utilisateur
             if (user is Etudiant etudiant)
             {
-                return Json(new { 
+                return Json(new
+                {
                     type = "Etudiant",
-                    user = new {
+                    user = new
+                    {
                         etudiant.Id,
                         etudiant.Nom,
                         etudiant.Prenom,
@@ -357,9 +359,11 @@ public async Task<IActionResult> DeleteUser(int userId)
             }
             else if (user is Enseignant enseignant)
             {
-                return Json(new { 
+                return Json(new
+                {
                     type = "Enseignant",
-                    user = new {
+                    user = new
+                    {
                         enseignant.Id,
                         enseignant.Nom,
                         enseignant.Prenom,

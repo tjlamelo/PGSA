@@ -30,12 +30,13 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
-
 // using (var scope = app.Services.CreateScope())
 // {
-//     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-//     await DatabaseSeeder.SeedAsync(context);
+//     var services = scope.ServiceProvider;
+//     var context = services.GetRequiredService<ApplicationDbContext>();
+//     await DatabaseSeeder.SeedAsync(context); // plus de passwordHasher
 // }
+
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();

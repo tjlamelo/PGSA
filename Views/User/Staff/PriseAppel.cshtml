@@ -1,0 +1,259 @@
+@{
+    ViewData["Title"] = "Prise d'appel";
+    ViewData["Breadcrumb"] = new List<(string Text, string Url)>
+    {
+        ("Gérer les séances", "/Seance"),
+        ("Prise d'appel", "#")
+    };
+    Layout = "_DashboardLayout";
+}
+
+@model PGSA_Licence3.Controllers.Seances.PriseAppelViewModel
+
+<div class="container-fluid mt-4 fade-in">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Prise d'appel</h2>
+        <a href="/Seance" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Retour aux séances
+        </a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i> @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (Model.Seance != null)
+    {
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Détails de la séance</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Cours:</strong> @Model.Seance.Cours?.Nom (@Model.Seance.Cours?.Code)</p>
+                        <p><strong>Date:</strong> @Model.Seance.DateHeureDebut.ToString("dd/MM/yyyy")</p>
+                        <p><strong>Heure:</strong> @Model.Seance.DateHeureDebut.ToString("HH:mm") - @Model.Seance.DateHeureFin.ToString("HH:mm")</p>
+                        <p><strong>Durée:</strong> @Model.DureeSeance heure(s)</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Salle:</strong> @Model.Seance.Salle</p>
+                        <p><strong>Type:</strong> @Model.Seance.Type</p>
+                        @if (Model.Seance.Groupe != null)
+                        {
+                            <p><strong>Groupe:</strong> @Model.Seance.Groupe.Nom</p>
+                        }
+                        else
+                        {
+                            var details = new List<string>();
+                            if (Model.Seance.Cycle != null) details.Add(Model.Seance.Cycle.NomCycle);
+                            if (Model.Seance.Niveau != null) details.Add(Model.Seance.Niveau.NomNiveau);
+                            if (Model.Seance.Specialite != null) details.Add(Model.Seance.Specialite.NomSpecialite);
+                            <p><strong>Détails:</strong> @string.Join(" - ", details)</p>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <form asp-action="SaveAppel" method="post">
+            <input type="hidden" name="seanceId" value="@Model.Seance.Id" />
+            
+            <div class="card shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h5 class="mb-0">Liste des étudiants</h5>
+                            @if (Model.AppelDejaFait)
+                            {
+                                <span class="badge bg-warning text-dark">Appel déjà effectué</span>
+                            }
+                        </div>
+                        <div class="col-auto">
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-sm btn-outline-success" id="selectAllPresent">
+                                    <i class="bi bi-check-all me-1"></i>Tous présents
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger" id="selectAllAbsent">
+                                    <i class="bi bi-x-circle me-1"></i>Tous absents
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Nom & Prénom</th>
+                                    <th>Cycle</th>
+                                    <th>Niveau</th>
+                                    <th>Spécialité</th>
+                                    <th>Statut de présence</th>
+                                    <th>Heures effectives</th>
+                                    <th>Commentaire</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.Etudiants != null)
+                                {
+                                    @for (int i = 0; i < Model.Etudiants.Count; i++)
+                                    {
+                                        var etudiant = Model.Etudiants[i];
+                                        var assiduiteExistante = Model.AssiduitesExistantes?.FirstOrDefault(a => a.EtudiantId == etudiant.Id);
+                                        var statutInitial = assiduiteExistante?.Statut ?? StatutPresence.Present;
+                                        var heuresInitiales = assiduiteExistante?.HeuresEffectuees ?? 
+                                            (statutInitial == StatutPresence.Present ? Model.DureeSeance : 0);
+                                        var commentaireInitial = assiduiteExistante?.Commentaire ?? "";
+
+                                        <tr>
+                                            <td>
+                                                <strong>@etudiant.Prenom @etudiant.Nom</strong>
+                                                <br />
+                                                <small class="text-muted">@etudiant.Email</small>
+                                            </td>
+                                            <td>@etudiant.Cycle?.NomCycle</td>
+                                            <td>@etudiant.Niveau?.NomNiveau</td>
+                                            <td>@etudiant.Specialite?.NomSpecialite</td>
+                                            <td>
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input presence-radio" type="radio" 
+                                                           name="presences[@etudiant.Id]" 
+                                                           id="present_@etudiant.Id" 
+                                                           value="Present"
+                                                           data-etudiant-id="@etudiant.Id"
+                                                           @(statutInitial == StatutPresence.Present ? "checked" : "")>
+                                                    <label class="form-check-label" for="present_@etudiant.Id">
+                                                        <i class="bi bi-check-circle text-success"></i> Présent
+                                                    </label>
+                                                </div>
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input presence-radio" type="radio" 
+                                                           name="presences[@etudiant.Id]" 
+                                                           id="retard_@etudiant.Id" 
+                                                           value="Retard"
+                                                           data-etudiant-id="@etudiant.Id"
+                                                           @(statutInitial == StatutPresence.Retard ? "checked" : "")>
+                                                    <label class="form-check-label" for="retard_@etudiant.Id">
+                                                        <i class="bi bi-clock text-warning"></i> Retard
+                                                    </label>
+                                                </div>
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input presence-radio" type="radio" 
+                                                           name="presences[@etudiant.Id]" 
+                                                           id="absent_@etudiant.Id" 
+                                                           value="Absent"
+                                                           data-etudiant-id="@etudiant.Id"
+                                                           @(statutInitial == StatutPresence.Absent ? "checked" : "")>
+                                                    <label class="form-check-label" for="absent_@etudiant.Id">
+                                                        <i class="bi bi-x-circle text-danger"></i> Absent
+                                                    </label>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="input-group input-group-sm">
+                                                    <input type="number" 
+                                                           class="form-control heures-input" 
+                                                           name="heuresEffectuees[@etudiant.Id]" 
+                                                           id="heures_@etudiant.Id" 
+                                                           min="0" 
+                                                           max="8" 
+                                                           step="0.5"
+                                                           value="@heuresInitiales"
+                                                           data-etudiant-id="@etudiant.Id">
+                                                    <span class="input-group-text">h</span>
+                                                </div>
+                                                <small class="form-text text-muted">
+                                                    Durée de la séance: @Model.DureeSeance h
+                                                </small>
+                                            </td>
+                                            <td>
+                                                <textarea class="form-control form-control-sm commentaire-input" 
+                                                          name="commentaires[@etudiant.Id]" 
+                                                          id="commentaire_@etudiant.Id" 
+                                                          rows="1"
+                                                          placeholder="Ajouter un commentaire...">@commentaireInitial</textarea>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save me-2"></i>Enregistrer l'appel
+                    </button>
+                </div>
+            </div>
+        </form>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const dureeSeance = @Model.DureeSeance;
+            
+            // Fonction pour marquer tous les étudiants comme présents
+            document.getElementById('selectAllPresent')?.addEventListener('click', function() {
+                document.querySelectorAll('.presence-radio').forEach(function(radio) {
+                    if (radio.value === 'Present') {
+                        radio.checked = true;
+                        // Mettre à jour les heures effectives
+                        const etudiantId = radio.getAttribute('data-etudiant-id');
+                        const heuresInput = document.getElementById(`heures_${etudiantId}`);
+                        if (heuresInput) {
+                            heuresInput.value = dureeSeance;
+                        }
+                    }
+                });
+            });
+
+            // Fonction pour marquer tous les étudiants comme absents
+            document.getElementById('selectAllAbsent')?.addEventListener('click', function() {
+                document.querySelectorAll('.presence-radio').forEach(function(radio) {
+                    if (radio.value === 'Absent') {
+                        radio.checked = true;
+                        // Mettre à jour les heures effectives
+                        const etudiantId = radio.getAttribute('data-etudiant-id');
+                        const heuresInput = document.getElementById(`heures_${etudiantId}`);
+                        if (heuresInput) {
+                            heuresInput.value = 0;
+                        }
+                    }
+                });
+            });
+
+            // Gérer le changement de statut de présence
+            document.querySelectorAll('.presence-radio').forEach(function(radio) {
+                radio.addEventListener('change', function() {
+                    const etudiantId = this.getAttribute('data-etudiant-id');
+                    const heuresInput = document.getElementById(`heures_${etudiantId}`);
+                    
+                    if (heuresInput) {
+                        if (this.value === 'Present') {
+                            heuresInput.value = dureeSeance;
+                        } else if (this.value === 'Retard' || this.value === 'Absent') {
+                            heuresInput.value = 0;
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+}

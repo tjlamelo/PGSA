@@ -1,0 +1,245 @@
+@model List<PGSA_Licence3.Models.SignalementAbsenceEnseignant>
+@{
+    ViewData["Title"] = "Gestion des Signalements d'Absence";
+    ViewData["Breadcrumb"] = new List<(string Text, string Url)>
+    {
+        ("Gérer les signalements", "/SignalementAbsenceEnseignant")
+    };
+    Layout = "_DashboardLayout";
+}
+
+<div class="container-fluid mt-4 fade-in">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Signalements d'Absence Enseignant</h2>
+        <!-- Bouton pour ouvrir le modal de signalement -->
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#signalerModal">
+            <i class="bi bi-exclamation-triangle me-2"></i>Signaler une absence
+        </button>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">Liste des signalements</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped" id="signalementsTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Séance</th>
+                            <th>Signalé par</th>
+                            <th>Date du signalement</th>
+                            <th>Motif</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            @foreach (var signalement in Model)
+                            {
+                                <tr>
+                                    <td>@signalement.Id</td>
+                                    <td>
+                                        <strong>@signalement.Seance?.Cours?.Nom</strong><br />
+                                        <small class="text-muted">
+                                            @signalement.Seance?.DateHeureDebut.ToString("dd/MM/yyyy HH:mm") (@signalement.Seance?.Salle)
+                                        </small>
+                                    </td>
+                                    <td>@signalement.Delegue?.Prenom @signalement.Delegue?.Nom</td>
+                                    <td>@signalement.DateSignalement.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>@signalement.Motif</td>
+                                    <td>
+                                        <span class="badge bg-@(GetStatutColor(signalement.Statut))">
+                                            @signalement.Statut
+                                        </span>
+                                    </td>
+                                    <td>
+                                        @if (signalement.Statut == StatutSignalement.EnAttente)
+                                        {
+                                            <div class="btn-group" role="group">
+                                                <button type="button" class="btn btn-sm btn-outline-success traiter-btn" data-id="@signalement.Id">
+                                                    <i class="bi bi-check-circle"></i> Traiter
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-danger rejeter-btn" data-id="@signalement.Id">
+                                                    <i class="bi bi-x-circle"></i> Rejeter
+                                                </button>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">
+                                                Traité par @signalement.Traitant?.Prenom @signalement.Traitant?.Nom le @signalement.DateTraitement?.ToString("dd/MM/yyyy")
+                                            </span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="7" class="text-center">Aucun signalement trouvé.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour signaler une absence -->
+<div class="modal fade" id="signalerModal" tabindex="-1" aria-labelledby="signalerModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="Signaler" method="post" id="signalerForm">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h5 class="modal-title" id="signalerModalLabel">Signaler une absence</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="SeanceId" class="form-label">Séance concernée <span class="text-danger">*</span></label>
+                        <select class="form-select" id="SeanceId" name="SeanceId" required>
+                            <option value="">-- Sélectionnez une séance --</option>
+                            @if (ViewBag.Seances != null)
+                            {
+                                @foreach (var seance in ViewBag.Seances)
+                                {
+                                    <option value="@seance.Id">
+                                        @seance.Cours?.Nom - @seance.DateHeureDebut.ToString("dd/MM/yyyy HH:mm") (@seance.Salle)
+                                    </option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="Motif" class="form-label">Motif (optionnel)</label>
+                        <textarea class="form-control" id="Motif" name="Motif" rows="4" placeholder="Précisez la raison du signalement..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-send me-2"></i>Envoyer le signalement
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const traiterBtns = document.querySelectorAll('.traiter-btn');
+            const rejeterBtns = document.querySelectorAll('.rejeter-btn');
+            const signalerForm = document.getElementById('signalerForm');
+            const signalerModal = new bootstrap.Modal(document.getElementById('signalerModal'));
+
+            // --- GESTION DU TRAITEMENT (AJAX) ---
+            traiterBtns.forEach(button => {
+                button.addEventListener('click', function () {
+                    const id = this.getAttribute('data-id');
+                    submitAction(id, 'Traiter');
+                });
+            });
+
+            // --- GESTION DU REJET (AJAX) ---
+            rejeterBtns.forEach(button => {
+                button.addEventListener('click', function () {
+                    const id = this.getAttribute('data-id');
+                    if (confirm('Êtes-vous sûr de vouloir rejeter ce signalement ?')) {
+                        submitAction(id, 'Rejeter');
+                    }
+                });
+            });
+
+            function submitAction(id, action) {
+                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+                fetch(`/SignalementAbsenceEnseignant/${action}/${id}`, {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': token
+                    }
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        alert(result.message);
+                        location.reload(); // Recharger pour voir la mise à jour
+                    } else {
+                        alert('Erreur : ' + result.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    alert('Une erreur inattendue est survenue.');
+                });
+            }
+
+            // --- GESTION DE LA SOUMISSION DU FORMULAIRE DE SIGNALEMENT (AJAX) ---
+            signalerForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+                const formData = new FormData(signalerForm);
+                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+                fetch('/SignalementAbsenceEnseignant/Signaler', {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': token
+                    },
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        alert(result.message);
+                        signalerModal.hide();
+                        location.reload(); // Recharger pour voir le nouveau signalement
+                    } else {
+                        alert('Erreur : ' + result.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    alert('Une erreur inattendue est survenue.');
+                });
+            });
+        });
+    </script>
+}
+
+@functions {
+    private string GetStatutColor(StatutSignalement statut)
+    {
+        return statut switch
+        {
+            StatutSignalement.EnAttente => "warning",
+            StatutSignalement.Traite => "success",
+            StatutSignalement.Rejete => "danger",
+            _ => "secondary"
+        };
+    }
+}

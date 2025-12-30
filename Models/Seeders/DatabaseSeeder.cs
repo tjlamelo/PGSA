@@ -10,27 +10,27 @@ namespace PGSA_Licence3.Models
         {
             await context.Database.EnsureCreatedAsync();
 
-            // 🔹 Seed Cycles
             await CycleSeeder.SeedAsync(context);
-
-            // 🔹 Seed Niveaux
             await NiveauSeeder.SeedAsync(context);
-
-            // 🔹 Seed Specialites
             await SpecialiteSeeder.SeedAsync(context);
 
-            // 🔹 Seed Roles
             if (!await context.Roles.AnyAsync())
-            {
                 await RoleSeeder.SeedRolesAsync(context);
-            }
 
-            // 🔹 Seed Enseignants, Cours et Séances
+            if (!await context.Permissions.AnyAsync())
+                await PermissionSeeder.SeedAsync(context);
+
+            if (!await context.Etudiants.AnyAsync())
+                await EtudiantSeeder.SeedAsync(context); // plus de passwordHasher
+
             if (!await context.Enseignants.AnyAsync())
-            {
-                await EnseignantCoursSeanceSeeder.SeedAsync(context);
-            }
-        }
+                await EnseignantSeeder.SeedAsync(context); // plus de passwordHasher
 
+            if (!await context.Groupes.AnyAsync())
+                await GroupeSeeder.SeedAsync(context);
+
+            if (!await context.Cours.AnyAsync())
+                await CoursSeeder.SeedAsync(context);
+        }
     }
 }
