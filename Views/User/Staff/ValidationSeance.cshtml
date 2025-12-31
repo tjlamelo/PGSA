@@ -1,0 +1,246 @@
+@model List<PGSA_Licence3.Models.Seance>
+@{
+    ViewData["Title"] = "Validation des Séances";
+    Layout = "_DashboardLayout";
+    
+    // Déterminer le rôle de l'utilisateur pour l'utiliser en JavaScript
+    bool isEnseignant = User.IsInRole("Enseignant");
+    bool isDelegue = User.IsInRole("Délégué");
+}
+
+<!-- Formulaire pour le token CSRF -->
+<form id="antiForgeryForm">@Html.AntiForgeryToken()</form>
+
+<div class="container-fluid mt-4 fade-in">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Validation des Séances Terminées</h2>
+    </div>
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped" id="validationsTable">
+                    <thead>
+                        <tr>
+                            <th>Cours</th>
+                            <th>Date et heure</th>
+                            <th>Salle</th>
+                            <th>Validation Enseignant</th>
+                            <th>Validation Délégué</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var seance in Model)
+                        {
+                            var validationEnseignant = seance.Validations?.FirstOrDefault(v => v.TypeValidation == TypeValidation.Enseignant);
+                            var validationDelegue = seance.Validations?.FirstOrDefault(v => v.TypeValidation == TypeValidation.Delegue);
+                            var canValidateEnseignant = isEnseignant && validationEnseignant == null;
+                            var canValidateDelegue = isDelegue && validationDelegue == null;
+
+                            <tr data-seance-id="@seance.Id">
+                                <td>@seance.Cours?.Nom</td>
+                                <td>@seance.DateHeureDebut.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>@seance.Salle</td>
+                                <td>
+                                    @if (validationEnseignant != null)
+                                    {
+                                        <span class="badge bg-@(validationEnseignant.Statut == StatutValidation.Validee ? "success" : "danger")">@(validationEnseignant.Statut == StatutValidation.Validee ? "Validée" : "Rejetée")</span>
+                                        <br /><small class="text-muted">par @validationEnseignant.Validateur?.Prenom @validationEnseignant.Validateur?.Nom</small>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning">En attente</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (validationDelegue != null)
+                                    {
+                                        <span class="badge bg-@(validationDelegue.Statut == StatutValidation.Validee ? "success" : "danger")">@(validationDelegue.Statut == StatutValidation.Validee ? "Validée" : "Rejetée")</span>
+                                        <br /><small class="text-muted">par @validationDelegue.Validateur?.Prenom @validationDelegue.Validateur?.Nom</small>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning">En attente</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (canValidateEnseignant || canValidateDelegue)
+                                    {
+                                        <button class="btn btn-sm btn-primary validation-btn" data-bs-toggle="modal" data-bs-target="#validationModal">
+                                            <i class="bi bi-check-square"></i> Valider/Rejeter
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Déjà traité</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmation -->
+<div class="modal fade" id="validationModal" tabindex="-1" aria-labelledby="validationModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="validationModalLabel">Confirmer la validation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Voulez-vous valider ou rejeter cette séance ?</p>
+                <div class="mb-3">
+                    <label for="commentaireValidation" class="form-label">Commentaire (optionnel)</label>
+                    <textarea class="form-control" id="commentaireValidation" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-danger" id="btnRejeter">Rejeter</button>
+                <button type="button" class="btn btn-success" id="btnValider">Valider</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Conteneur pour les Toasts -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <!-- Les toasts seront ajoutés ici dynamiquement -->
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // CORRIGÉ: Définir les variables de rôle pour JavaScript
+            const isEnseignant = @(isEnseignant ? "true" : "false");
+            const isDelegue = @(isDelegue ? "true" : "false");
+            
+            const validationButtons = document.querySelectorAll('.validation-btn');
+            const validationModal = new bootstrap.Modal(document.getElementById('validationModal'));
+            const tokenElement = document.querySelector('input[name="__RequestVerificationToken"]');
+            const token = tokenElement ? tokenElement.value : '';
+            let currentSeanceId = null;
+
+            if (!token) {
+                console.error("Token CSRF non trouvé");
+                showToast('Erreur', 'Token de sécurité manquant. Rechargez la page.', 'danger');
+                return;
+            }
+
+            validationButtons.forEach(button => {
+                button.addEventListener('click', function () {
+                    currentSeanceId = this.closest('tr').getAttribute('data-seance-id');
+                    // Réinitialiser le commentaire à chaque ouverture
+                    document.getElementById('commentaireValidation').value = '';
+                });
+            });
+
+            async function performValidation(action) {
+                if (!currentSeanceId) return;
+
+                // CORRIGÉ: Utiliser les valeurs d'énumération correctes
+                const statut = action === 'valider' ? 1 : 2; // 1 = Validee, 2 = Rejetee
+                const commentaire = document.getElementById('commentaireValidation').value;
+                const row = document.querySelector(`tr[data-seance-id="${currentSeanceId}"]`);
+                const buttonsInRow = row.querySelectorAll('.validation-btn');
+
+                // Désactiver les boutons
+                buttonsInRow.forEach(btn => btn.disabled = true);
+                validationModal.hide();
+
+                try {
+                    // CORRIGÉ: Créer l'objet de données correctement
+                    const requestData = {
+                        seanceId: parseInt(currentSeanceId),
+                        statut: statut,
+                        commentaire: commentaire
+                    };
+
+                    console.log('Envoi des données:', JSON.stringify(requestData));
+
+                    const response = await fetch('/ValidationSeance/Valider', {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json', 
+                            'RequestVerificationToken': token 
+                        },
+                        body: JSON.stringify(requestData)
+                    });
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error('Erreur HTTP:', response.status, errorText);
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const result = await response.json();
+                    console.log('Réponse du serveur:', result);
+
+                    if (result.success) {
+                        // CORRIGÉ: Utiliser les variables JavaScript au lieu de l'objet User
+                        const validationColumnIndex = isEnseignant ? 3 : 4;
+                        const validationCell = row.cells[validationColumnIndex];
+                        
+                        // CORRIGÉ: Utiliser la valeur numérique renvoyée par le serveur
+                        const statutValue = result.statutValue || (result.statut === 'Validee' ? 1 : 2);
+                        const badgeColor = statutValue === 1 ? 'success' : 'danger';
+                        const badgeText = statutValue === 1 ? 'Validée' : 'Rejetée';
+                        
+                        validationCell.innerHTML = `<span class="badge bg-${badgeColor}">${badgeText}</span><br /><small class="text-muted">par ${result.dateValidation}</small>`;
+                        row.cells[5].innerHTML = '<span class="text-muted">Déjà traité</span>';
+                        
+                        showToast('Succès', result.message, 'success');
+                    } else {
+                        showToast('Erreur', result.message, 'danger');
+                        buttonsInRow.forEach(btn => btn.disabled = false);
+                    }
+                } catch (error) {
+                    console.error('Erreur:', error);
+                    showToast('Erreur Inattendue', 'Une erreur est survenue. Vérifiez la console.', 'danger');
+                    buttonsInRow.forEach(btn => btn.disabled = false);
+                }
+            }
+
+            document.getElementById('btnValider').addEventListener('click', () => performValidation('valider'));
+            document.getElementById('btnRejeter').addEventListener('click', () => performValidation('rejeter'));
+
+            // Fonction pour afficher les toasts
+            function showToast(title, message, type = 'info') {
+                const toastContainer = document.querySelector('.toast-container');
+                const toastId = 'toast-' + Date.now();
+                const toastHtml = `
+                    <div id="${toastId}" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                        <div class="toast-header bg-${type} text-white">
+                            <strong class="me-auto">${title}</strong>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                        <div class="toast-body">
+                            ${message}
+                        </div>
+                    </div>`;
+                
+                toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+                const toastElement = document.getElementById(toastId);
+                const toast = new bootstrap.Toast(toastElement);
+                toast.show();
+
+                // Nettoyer le toast du DOM après qu'il soit caché
+                toastElement.addEventListener('hidden.bs.toast', () => toastElement.remove());
+            }
+        });
+    </script>
+}

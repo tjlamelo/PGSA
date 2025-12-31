@@ -13,57 +13,35 @@ namespace PGSA_Licence3.Services.Seances
             _context = context;
         }
 
-        /// <summary>
-        /// Récupère tous les cahiers de texte avec les détails de la séance et du cours associés.
-        /// Utilisé pour afficher la liste principale.
-        /// </summary>
-        public async Task<List<CahierDeTexte>> GetAllAsync()
+        // Récupérer tous les cahiers de texte
+        public async Task<List<PGSA_Licence3.Models.CahierDeTexte>> GetAllAsync()
         {
             return await _context.CahiersDeTexte
                 .Include(ct => ct.Seance)
-                .ThenInclude(s => s!.Cours!) // L'opérateur ! est nécessaire pour rassurer le compilateur
+                .ThenInclude(s => s!.Cours!)
                 .ToListAsync();
         }
 
-        /// <summary>
-        /// Récupère un cahier de texte par son ID avec les détails de la séance et du cours.
-        /// Peut être utilisé pour d'autres vues qui nécessitent les informations complètes.
-        /// </summary>
-        public async Task<CahierDeTexte?> GetByIdAsync(int id)
+        // Récupérer un cahier de texte par ID
+        public async Task<PGSA_Licence3.Models.CahierDeTexte?> GetByIdAsync(int id)
         {
             return await _context.CahiersDeTexte
                 .Include(ct => ct.Seance)
-                .ThenInclude(s => s!.Cours!) // L'opérateur ! est nécessaire
+                .ThenInclude(s => s!.Cours!)
                 .FirstOrDefaultAsync(ct => ct.Id == id);
         }
 
-        /// <summary>
-        /// Récupère un cahier de texte par son ID SANS charger les données liées (Seance, Cours).
-        /// Méthode sécurisée et optimisée pour les appels AJAX de type "édition".
-        /// </summary>
-        public async Task<CahierDeTexte?> GetByIdForEditAsync(int id)
+        // Récupérer un cahier de texte par ID de séance
+        public async Task<PGSA_Licence3.Models.CahierDeTexte?> GetBySeanceIdAsync(int seanceId)
         {
-            // FindAsync est très rapide et ne charge pas les propriétés de navigation,
-            // ce qui évite les erreurs si les données liées sont manquantes.
-            return await _context.CahiersDeTexte.FindAsync(id);
-        }
-
-        /// <summary>
-        /// Récupère un cahier de texte par l'ID de sa séance, sans charger les données liées.
-        /// Utilisé pour vérifier si un cahier existe déjà pour une séance donnée.
-        /// </summary>
-        public async Task<CahierDeTexte?> GetBySeanceIdAsync(int seanceId)
-        {
-            // On retire les Include car ils ne sont pas nécessaires pour cette opération
-            // et peuvent causer une erreur si les données liées sont manquantes.
             return await _context.CahiersDeTexte
+                .Include(ct => ct.Seance)
+                .ThenInclude(s => s!.Cours!)
                 .FirstOrDefaultAsync(ct => ct.SeanceId == seanceId);
         }
 
-        /// <summary>
-        /// Crée un nouveau cahier de texte ou met à jour un cahier existant.
-        /// </summary>
-        public async Task<CahierDeTexte> CreateOrUpdateAsync(CahierDeTexte cahierDeTexte)
+        // Créer ou mettre à jour un cahier de texte
+        public async Task<PGSA_Licence3.Models.CahierDeTexte> CreateOrUpdateAsync(PGSA_Licence3.Models.CahierDeTexte cahierDeTexte)
         {
             if (cahierDeTexte.Id == 0)
             {
@@ -89,9 +67,7 @@ namespace PGSA_Licence3.Services.Seances
             return cahierDeTexte;
         }
 
-        /// <summary>
-        /// Supprime un cahier de texte par son ID.
-        /// </summary>
+        // Supprimer un cahier de texte
         public async Task DeleteAsync(int id)
         {
             var cahierDeTexte = await _context.CahiersDeTexte.FindAsync(id);
@@ -101,10 +77,7 @@ namespace PGSA_Licence3.Services.Seances
             await _context.SaveChangesAsync();
         }
 
-        /// <summary>
-        /// Récupère toutes les séances avec leurs détails (cours, groupe, etc.).
-        /// Utilisé pour peupler la liste déroulante des séances dans le modal.
-        /// </summary>
+        // Récupérer toutes les séances pour la liste déroulante
         public async Task<List<Seance>> GetSeancesAsync()
         {
             return await _context.Seances

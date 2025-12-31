@@ -1,920 +1,392 @@
-@{
-    Layout = null;
-}
+@{ Layout = null; }
 
 <!DOCTYPE html>
 <html lang="fr">
-
-<head>
+  <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>@ViewData["Title"] - PGSA Université Saint Jean</title>
 
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <!-- Bootstrap CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    />
     <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css"
+    />
     <!-- Google Fonts - Poppins -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet">
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Site CSS -->
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/PGSA_Licence3.styles.css" asp-append-version="true" />
-    <style>
-        :root {
-            --primary: #1a3b59;
-            --secondary: #01233c;
-            --accent: #2c7be5;
-            --light: #f8f9fa;
-            --dark: #212529;
-            --success: #00d97e;
-            --info: #39afd1;
-            --warning: #f6c343;
-            --danger: #e63757;
-            --sidebar-width: 280px;
-            --sidebar-collapsed-width: 80px;
-            --header-height: 70px;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: #f5f7fb;
-            color: var(--dark);
-            overflow-x: hidden;
-        }
-
-        /* Sidebar */
-        .sidebar {
-            width: var(--sidebar-width);
-            height: 100vh;
-            position: fixed;
-            top: 0;
-            left: 0;
-            background: linear-gradient(180deg, var(--secondary) 0%, var(--primary) 100%);
-            color: white;
-            padding-top: var(--header-height);
-            z-index: 1000;
-            box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
-            overflow-y: auto;
-            overflow-x: hidden;
-            /* Éviter le scroll horizontal */
-        }
-
-        .sidebar.collapsed {
-            width: var(--sidebar-collapsed-width);
-        }
-
-        .sidebar-header {
-            padding: 0 20px 30px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .sidebar.collapsed .sidebar-header {
-            padding: 0 15px 30px;
-        }
-
-        .sidebar-header h5 {
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            font-size: 1.1rem;
-            transition: opacity 0.3s;
-        }
-
-        .sidebar.collapsed .sidebar-header h5 {
-            opacity: 0;
-            visibility: hidden;
-        }
-
-        .sidebar-toggle {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 1.2rem;
-            cursor: pointer;
-            padding: 5px;
-            border-radius: 4px;
-            transition: background 0.3s;
-        }
-
-        .sidebar-toggle:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .sidebar-menu {
-            list-style: none;
-            padding: 0;
-        }
-
-        .sidebar-menu li {
-            margin-bottom: 5px;
-            position: relative;
-        }
-
-        .sidebar-menu a {
-            padding: 14px 20px;
-            display: flex;
-            align-items: center;
-            color: rgba(255, 255, 255, 0.8);
-            text-decoration: none;
-            font-size: 15px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            border-left: 3px solid transparent;
-            position: relative;
-            white-space: nowrap;
-            /* Éviter le retour à la ligne */
-            overflow: hidden;
-            /* Cacher le texte qui dépasse */
-            text-overflow: ellipsis;
-            /* Ajouter des points de suspension */
-        }
-
-        .sidebar.collapsed .sidebar-menu a {
-            padding: 14px 15px;
-            justify-content: center;
-        }
-
-        .sidebar-menu a:hover,
-        .sidebar-menu a.active {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            border-left-color: var(--accent);
-        }
-
-        .sidebar-menu i {
-            margin-right: 12px;
-            font-size: 18px;
-            transition: margin 0.3s;
-            flex-shrink: 0;
-            /* Empêcher l'icône de rétrécir */
-        }
-
-        .sidebar.collapsed .sidebar-menu i {
-            margin-right: 0;
-        }
-
-        .sidebar-menu .menu-text {
-            transition: opacity 0.3s;
-            flex-grow: 1;
-            /* Permettre au texte de prendre l'espace disponible */
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .sidebar.collapsed .sidebar-menu .menu-text {
-            opacity: 0;
-            visibility: hidden;
-            position: absolute;
-            left: calc(var(--sidebar-collapsed-width) + 10px);
-            background: var(--primary);
-            padding: 8px 12px;
-            border-radius: 4px;
-            white-space: nowrap;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            z-index: 10;
-        }
-
-        .sidebar.collapsed .sidebar-menu li:hover .menu-text {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        /* Tooltip pour sidebar repliée */
-        .sidebar-menu a::before {
-            content: attr(data-tooltip);
-            position: absolute;
-            left: calc(var(--sidebar-collapsed-width) + 10px);
-            background: var(--primary);
-            color: white;
-            padding: 8px 12px;
-            border-radius: 4px;
-            white-space: nowrap;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s;
-            z-index: 10;
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .sidebar.collapsed .sidebar-menu a:hover::before {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        /* Sous-menus */
-        .sidebar-submenu {
-            list-style: none;
-            padding-left: 50px;
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease;
-        }
-
-        .sidebar.collapsed .sidebar-submenu {
-            padding-left: 0;
-            max-height: 0;
-        }
-
-        .sidebar-submenu.show {
-            max-height: 500px;
-        }
-
-        .sidebar-submenu a {
-            padding: 10px 20px;
-            font-size: 14px;
-            border-left: 2px solid transparent;
-        }
-
-        .sidebar-submenu a:hover,
-        .sidebar-submenu a.active {
-            border-left-color: var(--accent);
-        }
-
-        .sidebar-menu .has-submenu>a::after {
-            content: '\F282';
-            font-family: 'bootstrap-icons';
-            margin-left: auto;
-            transition: transform 0.3s;
-            flex-shrink: 0;
-            /* Empêcher l'icône de rétrécir */
-        }
-
-        .sidebar-menu .has-submenu.open>a::after {
-            transform: rotate(90deg);
-        }
-
-        /* Content */
-        .content {
-            margin-left: var(--sidebar-width);
-            padding: 30px;
-            margin-top: var(--header-height);
-            min-height: 100vh;
-            transition: all 0.3s ease;
-        }
-
-        .content.expanded {
-            margin-left: var(--sidebar-collapsed-width);
-        }
-
-        /* Top Navbar */
-        .navbar-custom {
-            background: white;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-            padding: 15px 30px;
-            height: var(--header-height);
-            position: fixed;
-            top: 0;
-            right: 0;
-            left: var(--sidebar-width);
-            z-index: 999;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-        }
-
-        .navbar-custom.expanded {
-            left: var(--sidebar-collapsed-width);
-        }
-
-        .navbar-brand {
-            color: var(--primary) !important;
-            font-weight: 700;
-            font-size: 1.3rem;
-            display: flex;
-            align-items: center;
-        }
-
-        .nav-link {
-            color: var(--dark) !important;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            transition: color 0.3s;
-        }
-
-        .nav-link:hover {
-            color: var(--accent) !important;
-        }
-
-        .nav-link i {
-            margin-right: 8px;
-        }
-
-        .user-profile {
-            display: flex;
-            align-items: center;
-        }
-
-        .user-profile img {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            margin-right: 10px;
-            border: 2px solid var(--light);
-            object-fit: cover;
-        }
-
-        .dropdown-menu {
-            border: none;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
-            padding: 10px 0;
-        }
-
-        .dropdown-item {
-            padding: 10px 20px;
-            font-weight: 500;
-            color: var(--dark);
-            display: flex;
-            align-items: center;
-            transition: all 0.3s;
-        }
-
-        .dropdown-item i {
-            margin-right: 10px;
-            color: var(--primary);
-        }
-
-        .dropdown-item:hover {
-            background-color: var(--light);
-            color: var(--accent);
-        }
-
-        /* Bouton toggle pour sidebar */
-        .sidebar-toggle-btn {
-            background: none;
-            border: none;
-            color: var(--primary);
-            font-size: 1.5rem;
-            cursor: pointer;
-            padding: 5px;
-            margin-right: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 4px;
-            transition: background 0.3s;
-        }
-
-        .sidebar-toggle-btn:hover {
-            background-color: rgba(26, 59, 89, 0.1);
-        }
-
-        /* Notifications */
-        .notification-icon {
-            position: relative;
-            margin-right: 15px;
-        }
-
-        .notification-badge {
-            position: absolute;
-            top: -5px;
-            right: -5px;
-            background-color: var(--danger);
-            color: white;
-            border-radius: 50%;
-            width: 18px;
-            height: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            font-weight: 600;
-        }
-
-        .notification-dropdown {
-            width: 350px;
-            max-height: 400px;
-            overflow-y: auto;
-            padding: 0;
-        }
-
-        .notification-header {
-            padding: 15px 20px;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-            font-weight: 600;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .notification-item {
-            padding: 15px 20px;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-            display: flex;
-            align-items: flex-start;
-            transition: background 0.3s;
-        }
-
-        .notification-item:hover {
-            background-color: rgba(0, 0, 0, 0.02);
-        }
-
-        .notification-icon-item {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 15px;
-            flex-shrink: 0;
-        }
-
-        .notification-icon-item.info {
-            background-color: rgba(57, 175, 209, 0.1);
-            color: var(--info);
-        }
-
-        .notification-icon-item.warning {
-            background-color: rgba(246, 195, 67, 0.1);
-            color: var(--warning);
-        }
-
-        .notification-icon-item.danger {
-            background-color: rgba(230, 55, 87, 0.1);
-            color: var(--danger);
-        }
-
-        .notification-icon-item.success {
-            background-color: rgba(0, 217, 126, 0.1);
-            color: var(--success);
-        }
-
-        .notification-content {
-            flex-grow: 1;
-        }
-
-        .notification-title {
-            font-weight: 600;
-            margin-bottom: 3px;
-            font-size: 14px;
-        }
-
-        .notification-message {
-            font-size: 13px;
-            color: #6c757d;
-            margin-bottom: 5px;
-        }
-
-        .notification-time {
-            font-size: 12px;
-            color: #adb5bd;
-        }
-
-        .notification-footer {
-            padding: 10px 20px;
-            text-align: center;
-            border-top: 1px solid rgba(0, 0, 0, 0.05);
-        }
-
-        .notification-footer a {
-            color: var(--accent);
-            font-weight: 500;
-            font-size: 14px;
-            text-decoration: none;
-        }
-
-        /* Breadcrumb */
-        .breadcrumb-container {
-            background-color: white;
-            border-radius: 8px;
-            padding: 15px 20px;
-            margin-bottom: 25px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        }
-
-        .breadcrumb {
-            margin-bottom: 0;
-            background-color: transparent;
-            padding: 0;
-        }
-
-        .breadcrumb-item+.breadcrumb-item::before {
-            content: "›";
-            color: #adb5bd;
-            font-weight: bold;
-        }
-
-        .breadcrumb-item.active {
-            color: var(--primary);
-            font-weight: 500;
-        }
-
-        /* Responsive */
-        @@media (max-width: 992px) {
-            .sidebar {
-                left: calc(-1 * var(--sidebar-width));
-            }
-
-            .sidebar.active {
-                left: 0;
-            }
-
-            .sidebar.collapsed {
-                width: var(--sidebar-width);
-                left: calc(-1 * var(--sidebar-width));
-            }
-
-            .sidebar.collapsed.active {
-                left: 0;
-            }
-
-            .content,
-            .navbar-custom {
-                margin-left: 0;
-                left: 0;
-            }
-
-            .navbar-custom {
-                padding-left: 20px;
-            }
-
-            .sidebar-menu .menu-text {
-                display: none;
-            }
-
-            .sidebar-menu a::before {
-                display: none;
-            }
-
-            .notification-dropdown {
-                width: 300px;
-            }
-        }
-
-        /* Animations */
-        .fade-in {
-            animation: fadeIn 0.5s ease-in-out;
-        }
-
-        @@keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Scrollbar personnalisée */
-        .sidebar::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .sidebar::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .sidebar::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 3px;
-        }
-
-        .sidebar::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.5);
-        }
-
-        /* Logo Université */
-        .university-logo {
-            width: 40px;
-            height: 40px;
-            background-color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 10px;
-            font-weight: bold;
-            color: var(--primary);
-        }
-
-        /* Section titres dans la sidebar */
-        .sidebar-section {
-            padding: 10px 20px;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: rgba(255, 255, 255, 0.5);
-            font-weight: 600;
-            margin-top: 15px;
-            margin-bottom: 5px;
-        }
-
-        .sidebar.collapsed .sidebar-section {
-            display: none;
-        }
-    </style>
-</head>
-
-<body>
-
+    <link
+      rel="stylesheet"
+      href="~/css/dashboard.css"
+      asp-append-version="true"
+    />
+    <link
+      rel="stylesheet"
+      href="~/PGSA_Licence3.styles.css"
+      asp-append-version="true"
+    />
+  </head>
+
+  <body>
     <!-- NAVBAR -->
     <nav class="navbar navbar-expand-lg navbar-custom fixed-top">
-        <button class="sidebar-toggle-btn" id="sidebarToggle">
-            <i class="bi bi-list"></i>
-        </button>
+      <button class="sidebar-toggle-btn" id="sidebarToggle">
+        <i class="bi bi-list"></i>
+      </button>
 
-        <a class="navbar-brand d-flex align-items-center" href="#">
-            <div class="university-logo">ISJ</div>
-            PGSA - Université Saint Jean
-        </a>
+      <a class="navbar-brand d-flex align-items-center" href="#">
+        <div class="university-logo">ISJ</div>
+        PGSA - Université Saint Jean
+      </a>
 
-        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarAdmin">
-            <span class="navbar-toggler-icon"></span>
-        </button>
+      <button
+        class="navbar-toggler border-0"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarAdmin"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
 
-        <div class="collapse navbar-collapse" id="navbarAdmin">
-            <ul class="navbar-nav ms-auto">
-                <!-- Notifications -->
-                <li class="nav-item dropdown">
-                    <a class="nav-link notification-icon" href="#" data-bs-toggle="dropdown">
-                        <i class="bi bi-bell"></i>
-                        <span class="notification-badge">3</span>
-                    </a>
-                    <div class="dropdown-menu dropdown-menu-end notification-dropdown">
-                        <div class="notification-header">
-                            <span>Notifications</span>
-                            <a href="#" class="text-primary">Marquer tout comme lu</a>
-                        </div>
-                        <div class="notification-list">
-                            <div class="notification-item">
-                                <div class="notification-icon-item danger">
-                                    <i class="bi bi-exclamation-triangle"></i>
-                                </div>
-                                <div class="notification-content">
-                                    <div class="notification-title">Absence enseignant signalée</div>
-                                    <div class="notification-message">M. Dupont est absent pour le cours de
-                                        Mathématiques</div>
-                                    <div class="notification-time">Il y a 10 minutes</div>
-                                </div>
-                            </div>
-                            <div class="notification-item">
-                                <div class="notification-icon-item warning">
-                                    <i class="bi bi-clock-history"></i>
-                                </div>
-                                <div class="notification-content">
-                                    <div class="notification-title">Validation en attente</div>
-                                    <div class="notification-message">3 séances en attente de validation</div>
-                                    <div class="notification-time">Il y a 1 heure</div>
-                                </div>
-                            </div>
-                            <div class="notification-item">
-                                <div class="notification-icon-item success">
-                                    <i class="bi bi-check-circle"></i>
-                                </div>
-                                <div class="notification-content">
-                                    <div class="notification-title">Justification approuvée</div>
-                                    <div class="notification-message">La justification de Martin Pierre a été approuvée
-                                    </div>
-                                    <div class="notification-time">Il y a 2 heures</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="notification-footer">
-                            <a href="#">Voir toutes les notifications</a>
-                        </div>
+      <div class="collapse navbar-collapse" id="navbarAdmin">
+        <ul class="navbar-nav ms-auto">
+          <!-- Notifications -->
+          <li class="nav-item dropdown">
+            <a
+              class="nav-link notification-icon"
+              href="#"
+              id="notificationDropdown"
+              role="button"
+              data-bs-toggle="dropdown"
+              aria-expanded="false"
+            >
+              <i class="bi bi-bell"></i>
+              <span class="notification-badge">3</span>
+            </a>
+            <ul
+              class="dropdown-menu dropdown-menu-end notification-dropdown"
+              aria-labelledby="notificationDropdown"
+            >
+              <div class="notification-header">
+                <span>Notifications</span>
+                <a href="#" class="text-primary">Marquer tout comme lu</a>
+              </div>
+              <div class="notification-list">
+                <div class="notification-item">
+                  <div class="notification-icon-item danger">
+                    <i class="bi bi-exclamation-triangle"></i>
+                  </div>
+                  <div class="notification-content">
+                    <div class="notification-title">
+                      Absence enseignant signalée
                     </div>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link" href="/">
-                        <i class="bi bi-house-door me-1"></i> Accueil
-                    </a>
-                </li>
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" data-bs-toggle="dropdown">
-                        <div class="user-profile">
-                            <img src="https://ui-avatars.com/api/?name=Admin&background=1a3b59&color=fff" alt="Admin">
-                            <span>Admin</span>
-                        </div>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="/Account/Profile"><i class="bi bi-person"></i> Mon profil</a>
-                        </li>
-                        <li>
-                            <hr class="dropdown-divider">
-                        </li>
-                        <li><a class="dropdown-item" href="/Account/Logout"><i class="bi bi-box-arrow-right"></i>
-                                Déconnexion</a></li>
-                    </ul>
-                </li>
+                    <div class="notification-message">
+                      M. Dupont est absent pour le cours de Mathématiques
+                    </div>
+                    <div class="notification-time">Il y a 10 minutes</div>
+                  </div>
+                </div>
+                <div class="notification-item">
+                  <div class="notification-icon-item warning">
+                    <i class="bi bi-clock-history"></i>
+                  </div>
+                  <div class="notification-content">
+                    <div class="notification-title">Validation en attente</div>
+                    <div class="notification-message">
+                      3 séances en attente de validation
+                    </div>
+                    <div class="notification-time">Il y a 1 heure</div>
+                  </div>
+                </div>
+                <div class="notification-item">
+                  <div class="notification-icon-item success">
+                    <i class="bi bi-check-circle"></i>
+                  </div>
+                  <div class="notification-content">
+                    <div class="notification-title">
+                      Justification approuvée
+                    </div>
+                    <div class="notification-message">
+                      La justification de Martin Pierre a été approuvée
+                    </div>
+                    <div class="notification-time">Il y a 2 heures</div>
+                  </div>
+                </div>
+              </div>
+              <div class="notification-footer">
+                <a href="#">Voir toutes les notifications</a>
+              </div>
             </ul>
-        </div>
+          </li>
+
+          <li class="nav-item">
+            <a class="nav-link" href="/">
+              <i class="bi bi-house-door me-1"></i> Accueil
+            </a>
+          </li>
+
+          <li class="nav-item dropdown">
+            <a
+              class="nav-link dropdown-toggle d-flex align-items-center"
+              href="#"
+              id="userDropdown"
+              role="button"
+              data-bs-toggle="dropdown"
+              aria-expanded="false"
+            >
+              <div class="user-profile">
+                <img
+                  src="https://picsum.photos/seed/admin/100/100.jpg"
+                  alt="Admin"
+                />
+                <span>Admin</span>
+              </div>
+            </a>
+            <ul
+              class="dropdown-menu dropdown-menu-end"
+              aria-labelledby="userDropdown"
+            >
+              <li>
+                <a class="dropdown-item" href="/Profile"
+                  ><i class="bi bi-person"></i> Mon profil</a
+                >
+              </li>
+              <li><hr class="dropdown-divider" /></li>
+              <li>
+                <a class="dropdown-item" href="/Logout">
+                  <i class="bi bi-box-arrow-right"></i> Déconnexion
+                </a>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </div>
     </nav>
 
     <!-- SIDEBAR -->
     <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <h5>
-                <i class="bi bi-grid-3x3-gap-fill me-2"></i>
-                MENU PGSA
-            </h5>
-            <button class="sidebar-toggle" id="desktopSidebarToggle">
-                <i class="bi bi-chevron-left"></i>
-            </button>
-        </div>
+      <div class="sidebar-header">
+        <h5>
+          <i class="bi bi-grid-3x3-gap-fill me-2"></i>
+          MENU PGSA
+        </h5>
+        <button class="sidebar-toggle" id="desktopSidebarToggle">
+          <i class="bi bi-chevron-left"></i>
+        </button>
+      </div>
 
-        <ul class="sidebar-menu">
-            <!-- Gestion des utilisateurs -->
-            <li>
-                <a href="/Admin/UserManagement/Account" data-tooltip="Gestion des utilisateurs">
-                    <i class="bi bi-people"></i>
-                    <span class="menu-text">Gestion des utilisateurs</span>
-                </a>
-            </li>
+      <ul class="sidebar-menu">
+        <li>
+          <a
+            href="/dashboard/index"
+            data-tooltip="Gestion des utilisateurs"
+          >
+            <i class="bi bi-people"></i>
+            <span class="menu-text">Dashboard</span>
+          </a>
+        </li>
+        <!-- Gestion des utilisateurs -->
+        <li>
+          <a
+            href="/Admin/UserManagement/Account"
+            data-tooltip="Gestion des utilisateurs"
+          >
+            <i class="bi bi-people"></i>
+            <span class="menu-text">Gestion des utilisateurs</span>
+          </a>
+        </li>
 
-            <!-- Import étudiants -->
-            <li>
-                <a href="/Students/Import" data-tooltip="Import des étudiants">
-                    <i class="bi bi-upload"></i>
-                    <span class="menu-text">Import étudiants</span>
-                </a>
-            </li>
+        <!-- Import étudiants -->
+        <li>
+          <a href="/Students/Import" data-tooltip="Import des étudiants">
+            <i class="bi bi-upload"></i>
+            <span class="menu-text">Import étudiants</span>
+          </a>
+        </li>
 
-            <!-- Séances -->
-            <li>
-                <a href="/Seance" data-tooltip="Gestion des séances">
-                    <i class="bi bi-calendar-plus"></i>
-                    <span class="menu-text">Séances</span>
-                </a>
-            </li>
-            <!-- Prise d'appel -->
-            <li>
-                <a href="/Assiduite/PriseAppel" data-tooltip="Prise d'appel">
-                    <i class="bi bi-check2-square"></i>
-                    <span class="menu-text">Prise d'appel</span>
-                </a>
-            </li>
-            <!-- Cahier de texte -->
-            <li>
-                <a href="/CahierDeTexte" data-tooltip="Cahier de texte">
-                    <i class="bi bi-journal-text"></i>
-                    <span class="menu-text">Cahier de texte</span>
-                </a>
-            </li>
-<!-- Signalement absence enseignant -->
-<li>
-    <a href="/SignalementAbsenceEnseignant" data-tooltip="Signalement des absences enseignants">
-        <i class="bi bi-exclamation-triangle"></i>
-        <span class="menu-text">Absence enseignant</span>
-    </a>
-</li>
+        <!-- Séances -->
+        <li>
+          <a href="/Seance" data-tooltip="Gestion des séances">
+            <i class="bi bi-calendar-plus"></i>
+            <span class="menu-text">Séances</span>
+          </a>
+        </li>
 
+        <!-- Prise d'appel -->
+        <li>
+          <a href="/Assiduite/PriseAppel" data-tooltip="Prise d'appel">
+            <i class="bi bi-check2-square"></i>
+            <span class="menu-text">Prise d'appel</span>
+          </a>
+        </li>
 
-        </ul>
+        <!-- Cahier de texte -->
+        <li>
+          <a href="/CahierDeTexte" data-tooltip="Cahier de texte">
+            <i class="bi bi-journal-text"></i>
+            <span class="menu-text">Cahier de texte</span>
+          </a>
+        </li>
+
+        <!-- Signalement absence enseignant -->
+        <li>
+          <a
+            href="/SignalementAbsenceEnseignant"
+            data-tooltip="Signalement des absences enseignants"
+          >
+            <i class="bi bi-exclamation-triangle"></i>
+            <span class="menu-text">Absence enseignant</span>
+          </a>
+        </li>
+
+        <li>
+          <a href="/ValidationSeance" data-tooltip="Validation des séances">
+            <i class="bi bi-clipboard-check"></i>
+            <span class="menu-text">Validation séances</span>
+          </a>
+        </li>
+      </ul>
     </div>
-
 
     <!-- CONTENU -->
     <div class="content" id="content">
-        <!-- Breadcrumb Dynamique -->
-        <div class="breadcrumb-container">
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="/">Accueil</a></li>
-                    @if (ViewData["Breadcrumb"] != null)
-                    {
-                        var breadcrumb = ViewData["Breadcrumb"] as List<(string Text, string Url)>;
-                        if (breadcrumb != null)
-                        {
-                            for (int i = 0; i < breadcrumb.Count; i++)
-                            {
-                                if (i < breadcrumb.Count - 1)
-                                {
-                                    <li class="breadcrumb-item"><a href="@breadcrumb[i].Url">@breadcrumb[i].Text</a></li>
-                                }
-                                else
-                                {
-                                    <li class="breadcrumb-item active" aria-current="page">@breadcrumb[i].Text</li>
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        <li class="breadcrumb-item active" aria-current="page">@ViewData["Title"]</li>
-                    }
-                </ol>
-            </nav>
-        </div>
+      <!-- Breadcrumb Dynamique -->
+      <div class="breadcrumb-container">
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Accueil</a></li>
+            @if (ViewData["Breadcrumb"] != null) { var breadcrumb =
+            ViewData["Breadcrumb"] as List<(string Text, string Url)>; if
+            (breadcrumb != null) { for (int i = 0; i < breadcrumb.Count; i++) {
+            if (i < breadcrumb.Count - 1) {
+            <li class="breadcrumb-item">
+              <a href="@breadcrumb[i].Url">@breadcrumb[i].Text</a>
+            </li>
+            } else {
+            <li class="breadcrumb-item active" aria-current="page">
+              @breadcrumb[i].Text
+            </li>
+            } } } } else {
+            <li class="breadcrumb-item active" aria-current="page">
+              @ViewData["Title"]
+            </li>
+            }
+          </ol>
+        </nav>
+      </div>
 
-        @RenderBody()
+      @RenderBody()
     </div>
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const sidebar = document.getElementById('sidebar');
-            const content = document.getElementById('content');
-            const navbar = document.querySelector('.navbar-custom');
-            const desktopSidebarToggle = document.getElementById('desktopSidebarToggle');
-            const sidebarToggle = document.getElementById('sidebarToggle');
-            const desktopToggleIcon = desktopSidebarToggle.querySelector('i');
-
-            // Toggle sidebar pour desktop
-            desktopSidebarToggle.addEventListener('click', function () {
-                sidebar.classList.toggle('collapsed');
-                content.classList.toggle('expanded');
-                navbar.classList.toggle('expanded');
-
-                // Changer l'icône du bouton
-                if (sidebar.classList.contains('collapsed')) {
-                    desktopToggleIcon.classList.remove('bi-chevron-left');
-                    desktopToggleIcon.classList.add('bi-chevron-right');
-                } else {
-                    desktopToggleIcon.classList.remove('bi-chevron-right');
-                    desktopToggleIcon.classList.add('bi-chevron-left');
-                }
-            });
-
-            // Toggle sidebar pour mobile et desktop via le bouton dans la navbar
-            sidebarToggle.addEventListener('click', function () {
-                sidebar.classList.toggle('collapsed');
-                content.classList.toggle('expanded');
-                navbar.classList.toggle('expanded');
-
-                // Changer l'icône du bouton
-                if (sidebar.classList.contains('collapsed')) {
-                    desktopToggleIcon.classList.remove('bi-chevron-left');
-                    desktopToggleIcon.classList.add('bi-chevron-right');
-                } else {
-                    desktopToggleIcon.classList.remove('bi-chevron-right');
-                    desktopToggleIcon.classList.add('bi-chevron-left');
-                }
-
-                // Pour mobile, on ajoute la classe active pour afficher la sidebar
-                if (window.innerWidth <= 992) {
-                    sidebar.classList.toggle('active');
-                }
-            });
-
-            // Fermer la sidebar en cliquant à l'extérieur sur mobile
-            document.addEventListener('click', function (event) {
-                if (window.innerWidth <= 992) {
-                    if (!sidebar.contains(event.target) &&
-                        !sidebarToggle.contains(event.target) &&
-                        sidebar.classList.contains('active')) {
-                        sidebar.classList.remove('active');
-                    }
-                }
-            });
-
-            // Gérer le redimensionnement de la fenêtre
-            window.addEventListener('resize', function () {
-                if (window.innerWidth > 992) {
-                    sidebar.classList.remove('active');
-                }
-            });
-
-            // Activer le lien de menu actif
-            const currentLocation = window.location.pathname;
-            const menuLinks = document.querySelectorAll('.sidebar-menu a');
-
-            menuLinks.forEach(link => {
-                if (link.getAttribute('href') === currentLocation) {
-                    link.classList.add('active');
-                } else {
-                    link.classList.remove('active');
-                }
-            });
-
-            // Gestion des sous-menus
-            const submenuItems = document.querySelectorAll('.has-submenu > a');
-
-            submenuItems.forEach(item => {
-                item.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    const parent = this.parentElement;
-                    const submenu = parent.querySelector('.sidebar-submenu');
-
-                    parent.classList.toggle('open');
-                    submenu.classList.toggle('show');
-                });
-            });
-        });
-    </script>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
-    @RenderSection("Scripts", required: false)
-</body>
 
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const sidebar = document.getElementById("sidebar");
+        const content = document.getElementById("content");
+        const navbar = document.querySelector(".navbar-custom");
+        const desktopSidebarToggle = document.getElementById(
+          "desktopSidebarToggle"
+        );
+        const sidebarToggle = document.getElementById("sidebarToggle");
+        const desktopToggleIcon = desktopSidebarToggle.querySelector("i");
+
+        // Toggle sidebar pour desktop
+        desktopSidebarToggle.addEventListener("click", function () {
+          sidebar.classList.toggle("collapsed");
+          content.classList.toggle("expanded");
+          navbar.classList.toggle("expanded");
+
+          // Changer l'icône du bouton
+          if (sidebar.classList.contains("collapsed")) {
+            desktopToggleIcon.classList.remove("bi-chevron-left");
+            desktopToggleIcon.classList.add("bi-chevron-right");
+          } else {
+            desktopToggleIcon.classList.remove("bi-chevron-right");
+            desktopToggleIcon.classList.add("bi-chevron-left");
+          }
+        });
+
+        // Toggle sidebar pour mobile et desktop via le bouton dans la navbar
+        sidebarToggle.addEventListener("click", function () {
+          sidebar.classList.toggle("collapsed");
+          content.classList.toggle("expanded");
+          navbar.classList.toggle("expanded");
+
+          // Changer l'icône du bouton
+          if (sidebar.classList.contains("collapsed")) {
+            desktopToggleIcon.classList.remove("bi-chevron-left");
+            desktopToggleIcon.classList.add("bi-chevron-right");
+          } else {
+            desktopToggleIcon.classList.remove("bi-chevron-right");
+            desktopToggleIcon.classList.add("bi-chevron-left");
+          }
+
+          // Pour mobile, on ajoute la classe active pour afficher la sidebar
+          if (window.innerWidth <= 992) {
+            sidebar.classList.toggle("active");
+          }
+        });
+
+        // Fermer la sidebar en cliquant à l'extérieur sur mobile
+        document.addEventListener("click", function (event) {
+          if (window.innerWidth <= 992) {
+            if (
+              !sidebar.contains(event.target) &&
+              !sidebarToggle.contains(event.target) &&
+              sidebar.classList.contains("active")
+            ) {
+              sidebar.classList.remove("active");
+            }
+          }
+        });
+
+        // Gérer le redimensionnement de la fenêtre
+        window.addEventListener("resize", function () {
+          if (window.innerWidth > 992) {
+            sidebar.classList.remove("active");
+          }
+        });
+
+        // Activer le lien de menu actif
+        const currentLocation = window.location.pathname;
+        const menuLinks = document.querySelectorAll(".sidebar-menu a");
+
+        menuLinks.forEach((link) => {
+          if (link.getAttribute("href") === currentLocation) {
+            link.classList.add("active");
+          } else {
+            link.classList.remove("active");
+          }
+        });
+
+        // Gestion des sous-menus
+        const submenuItems = document.querySelectorAll(".has-submenu > a");
+
+        submenuItems.forEach((item) => {
+          item.addEventListener("click", function (e) {
+            e.preventDefault();
+            const parent = this.parentElement;
+            const submenu = parent.querySelector(".sidebar-submenu");
+
+            parent.classList.toggle("open");
+            submenu.classList.toggle("show");
+          });
+        });
+      });
+    </script>
+    @RenderSection("Scripts", required: false)
+  </body>
 </html>

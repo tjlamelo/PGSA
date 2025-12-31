@@ -1,0 +1,316 @@
+@model PGSA_Licence3.Models.User
+@{
+    ViewData["Title"] = "Mon Profil";
+    Layout = "_DashboardLayout";
+    
+    // Configuration du fil d'Ariane
+    ViewData["Breadcrumb"] = new List<(string Text, string Url)>
+    {
+        ("Accueil", "/"),
+        ("Profil", "/Profile")
+    };
+    
+    // CORRIGÉ : Déclarer et caster les variables UNE SEULE FOIS au début pour éviter les erreurs de portée
+    PGSA_Licence3.Models.Etudiant? etudiant = Model as PGSA_Licence3.Models.Etudiant;
+    PGSA_Licence3.Models.Enseignant? enseignant = Model as PGSA_Licence3.Models.Enseignant;
+    bool isEtudiant = etudiant != null;
+    bool isEnseignant = enseignant != null;
+    var roles = ViewBag.Roles as List<PGSA_Licence3.Models.Role> ?? new List<PGSA_Licence3.Models.Role>();
+}
+
+<div class="container-fluid fade-in">
+    <!-- En-tête du profil -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
+                            <i class="bi bi-person-circle fs-1 text-primary"></i>
+                        </div>
+                        <div>
+                            <h1 class="h3 mb-1">@Model.Prenom @Model.Nom</h1>
+                            <p class="text-muted mb-0">
+                                @(isEtudiant ? "Étudiant" : isEnseignant ? "Enseignant" : "Utilisateur")
+                                @if (roles.Any())
+                                {
+                                    <span class="ms-2">
+                                        @foreach (var role in roles)
+                                        {
+                                            <span class="badge bg-secondary me-1">@role.Nom</span>
+                                        }
+                                    </span>
+                                }
+                                @if (isEtudiant)
+                                {
+                                    // CORRIGÉ : Utiliser NomSpecialite au lieu de Nom
+                                    <span class="badge bg-info ms-2">@etudiant?.Specialite?.NomSpecialite</span>
+                                }
+                                else if (isEnseignant)
+                                {
+                                    <span class="badge bg-info ms-2">@enseignant?.Specialite</span>
+                                }
+                            </p>
+                        </div>
+                        <div class="ms-auto">
+                            <span class="badge @(Model.Active ? "bg-success" : "bg-danger") fs-6">
+                                @(Model.Active ? "Actif" : "Inactif")
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Informations générales -->
+    <div class="row mb-4">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0"><i class="bi bi-person me-2"></i>Informations personnelles</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless table-sm">
+                        <tr>
+                            <td class="text-muted" style="width: 40%;">Matricule</td>
+                            <td>@Model.Matricule ?? "Non défini"</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Nom d'utilisateur</td>
+                            <td>@Model.Username</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Nom</td>
+                            <td>@Model.Nom</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Prénom</td>
+                            <td>@Model.Prenom</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Téléphone</td>
+                            <td>@Model.Telephone ?? "Non défini"</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0"><i class="bi bi-envelope me-2"></i>Contact</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless table-sm">
+                        <tr>
+                            <td class="text-muted" style="width: 40%;">Email</td>
+                            <td>@Model.Email</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Email institutionnel</td>
+                            <td>@Model.EmailInstitutionnel ?? "Non défini"</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Date de création</td>
+                            <td>@Model.CreatedAt.ToString("dd/MM/yyyy")</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Dernière mise à jour</td>
+                            <td>@(Model.UpdatedAt?.ToString("dd/MM/yyyy") ?? "Jamais")</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Informations spécifiques selon le type d'utilisateur -->
+    @if (isEtudiant)
+    {
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-0">
+                        <h5 class="mb-0"><i class="bi bi-mortarboard me-2"></i>Informations académiques</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <table class="table table-borderless table-sm">
+                                    <tr>
+                                        <td class="text-muted" style="width: 40%;">Cycle</td>
+                                        <!-- CORRIGÉ : Utiliser NomCycle au lieu de Nom -->
+                                        <td>@etudiant?.Cycle?.NomCycle ?? "Non défini"</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Niveau</td>
+                                        <!-- CORRIGÉ : Utiliser NomNiveau au lieu de Nom -->
+                                        <td>@etudiant?.Niveau?.NomNiveau ?? "Non défini"</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Spécialité</td>
+                                        <!-- CORRIGÉ : Utiliser NomSpecialite au lieu de Nom -->
+                                        <td>@etudiant?.Specialite?.NomSpecialite ?? "Non défini"</td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <table class="table table-borderless table-sm">
+                                    <tr>
+                                        <td class="text-muted" style="width: 40%;">Date d'inscription</td>
+                                        <td>@etudiant?.DateInscription.ToString("dd/MM/yyyy")</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Groupes</td>
+                                        <td>
+                                            @if (etudiant?.Groupes != null && etudiant.Groupes.Any())
+                                            {
+                                                @string.Join(", ", etudiant.Groupes.Select(g => g.Nom))
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">Aucun groupe</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else if (isEnseignant)
+    {
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-0">
+                        <h5 class="mb-0"><i class="bi bi-book me-2"></i>Informations professionnelles</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <table class="table table-borderless table-sm">
+                                    <tr>
+                                        <td class="text-muted" style="width: 40%;">Spécialité</td>
+                                        <td>@enseignant?.Specialite ?? "Non définie"</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Date d'embauche</td>
+                                        <td>@enseignant?.DateEmbauche.ToString("dd/MM/yyyy")</td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <table class="table table-borderless table-sm">
+                                    <tr>
+                                        <td class="text-muted" style="width: 40%;">Cours enseignés</td>
+                                        <td>
+                                            @if (enseignant?.Cours != null && enseignant.Cours.Any())
+                                            {
+                                                <span class="badge bg-primary me-1 mb-1">@enseignant.Cours.Count cours</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">Aucun cours assigné</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Rôles et permissions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0"><i class="bi bi-shield-check me-2"></i>Rôles et permissions</h5>
+                </div>
+                <div class="card-body">
+                    @if (roles.Any())
+                    {
+                        <div class="row">
+                            @foreach (var role in roles)
+                            {
+                                <div class="col-md-4 mb-3">
+                                    <div class="card border-0 bg-light">
+                                        <div class="card-body">
+                                            <h6 class="card-title">@role.Nom</h6>
+                                            <p class="card-text small text-muted">@role.Description</p>
+                                            @if (role.Permissions != null && role.Permissions.Any())
+                                            {
+                                                <div class="mt-2">
+                                                    <small class="text-muted">Permissions:</small>
+                                                    <div class="mt-1">
+                                                        @foreach (var permission in role.Permissions.Take(3))
+                                                        {
+                                                            <span class="badge bg-light text-dark me-1 mb-1">@permission.Nom</span>
+                                                        }
+                                                        @if (role.Permissions.Count > 3)
+                                                        {
+                                                            <span class="badge bg-light text-dark me-1 mb-1">+@(role.Permissions.Count - 3) autres</span>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted">Aucun rôle assigné</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("Profil utilisateur chargé !");
+            
+            // Animation au chargement
+            const cards = document.querySelectorAll('.card');
+            cards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.classList.add('fade-in');
+                }, index * 100);
+            });
+        });
+    </script>
+    
+    <style>
+        .hover-lift {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .hover-lift:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+        }
+        
+        .table-borderless td {
+            padding: 0.5rem 0;
+        }
+        
+        .badge {
+            font-weight: 500;
+            padding: 0.4em 0.8em;
+        }
+    </style>
+}

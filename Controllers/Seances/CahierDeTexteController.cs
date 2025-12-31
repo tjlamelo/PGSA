@@ -27,7 +27,7 @@ namespace PGSA_Licence3.Controllers.Seances
 
         [HttpPost("Save")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Save(CahierDeTexte cahierDeTexte)
+        public async Task<IActionResult> Save(PGSA_Licence3.Models.CahierDeTexte cahierDeTexte)
         {
             if (!ModelState.IsValid)
             {
@@ -45,12 +45,10 @@ namespace PGSA_Licence3.Controllers.Seances
             }
         }
 
-        // --- MODIFIEZ CETTE ACTION ---
         [HttpGet("GetByIdJson/{id}")]
         public async Task<IActionResult> GetByIdJson(int id)
         {
-            // On utilise la nouvelle méthode sécurisée qui ne charge pas les données liées
-            var cahierDeTexte = await _cahierDeTexteService.GetByIdForEditAsync(id);
+            var cahierDeTexte = await _cahierDeTexteService.GetByIdAsync(id);
             if (cahierDeTexte == null) return NotFound();
             return Json(cahierDeTexte);
         }

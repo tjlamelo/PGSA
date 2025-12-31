@@ -1,22 +1,145 @@
+@model PGSA_Licence3.Models.User
 @{
     ViewData["Title"] = "Dashboard";
     Layout = "_DashboardLayout";
+    
+    // Configuration du fil d'Ariane
+    ViewData["Breadcrumb"] = new List<(string Text, string Url)>
+    {
+ 
+        ("Dashboard", "/dashboard/index")
+    };
 }
 
 <div class="container-fluid fade-in">
+    <!-- En-tête avec informations utilisateur -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm hover-lift">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="h3 mb-0">Bienvenue, @Model.Prenom @Model.Nom</h1>
+                           <p class="text-muted mb-0">@(Model.EmailInstitutionnel ?? Model.Email)</p>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge @(Model.Active ? "bg-success" : "bg-danger")">
+                                @(Model.Active ? "Actif" : "Inactif")
+                            </span>
+                         <p class="card-text small text-muted">@(Model.Matricule ?? "Non défini")</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
- 
-
-    <!-- Statistiques -->
+    <!-- Cartes d'informations utilisateur -->
     <div class="row g-4 mb-5">
-       
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-sm hover-lift h-100">
+                <div class="card-body text-center">
+                    <div class="d-flex justify-content-center align-items-center mb-3">
+                        <div class="rounded-circle bg-primary bg-opacity-10 p-3">
+                            <i class="bi bi-person-circle fs-2 text-primary"></i>
+                        </div>
+                    </div>
+                    <h6 class="card-title">Identité</h6>
+                    <p class="card-text small text-muted">
+                        @Model.Prenom @Model.Nom<br>
+                        @Model.Username
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-sm hover-lift h-100">
+                <div class="card-body text-center">
+                    <div class="d-flex justify-content-center align-items-center mb-3">
+                        <div class="rounded-circle bg-info bg-opacity-10 p-3">
+                            <i class="bi bi-envelope fs-2 text-info"></i>
+                        </div>
+                    </div>
+                    <h6 class="card-title">Contact</h6>
+                    <p class="card-text small text-muted">
+                        @Model.EmailInstitutionnel ?? Model.Email
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-sm hover-lift h-100">
+                <div class="card-body text-center">
+                    <div class="d-flex justify-content-center align-items-center mb-3">
+                        <div class="rounded-circle bg-warning bg-opacity-10 p-3">
+                            <i class="bi bi-card-text fs-2 text-warning"></i>
+                        </div>
+                    </div>
+                    <h6 class="card-title">Matricule</h6>
+                    <p class="card-text small text-muted">
+                     @(Model.Matricule ?? "Non défini")
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-sm hover-lift h-100">
+                <div class="card-body text-center">
+                    <div class="d-flex justify-content-center align-items-center mb-3">
+                        <div class="rounded-circle @(Model.Active ? "bg-success bg-opacity-10" : "bg-danger bg-opacity-10") p-3">
+                            <i class="bi @(Model.Active ? "bi-check-circle" : "bi-x-circle") fs-2 @(Model.Active ? "text-success" : "text-danger")"></i>
+                        </div>
+                    </div>
+                    <h6 class="card-title">Statut</h6>
+                    <p class="card-text small text-muted">
+                        @(Model.Active ? "Compte actif" : "Compte inactif")
+                    </p>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- Tableau -->
+    <!-- Section pour ajouter d'autres éléments du dashboard -->
     <div class="row">
-     
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">Actions rapides</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <a href="/Seance" class="btn btn-outline-primary w-100 d-flex align-items-center justify-content-center">
+                                <i class="bi bi-calendar-plus me-2"></i>
+                                Gérer les séances
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="/Assiduite/PriseAppel" class="btn btn-outline-success w-100 d-flex align-items-center justify-content-center">
+                                <i class="bi bi-check2-square me-2"></i>
+                                Prise d'appel
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="/CahierDeTexte" class="btn btn-outline-info w-100 d-flex align-items-center justify-content-center">
+                                <i class="bi bi-journal-text me-2"></i>
+                                Cahier de texte
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="/ValidationSeance" class="btn btn-outline-warning w-100 d-flex align-items-center justify-content-center">
+                                <i class="bi bi-clipboard-check me-2"></i>
+                                Valider séances
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-
 </div>
 
 @section Scripts {

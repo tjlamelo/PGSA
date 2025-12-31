@@ -8,7 +8,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-
+using PGSA_Licence3.Utils;
 namespace PGSA_Licence3.Services.UserManagement
 {
     public class AccountService
@@ -62,13 +62,9 @@ namespace PGSA_Licence3.Services.UserManagement
         }
 
         // Hacher le mot de passe
-        public string HashPassword(string password)
+          public string HashPassword(string password)
         {
-            using (var sha256 = SHA256.Create())
-            {
-                var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
-                return BitConverter.ToString(hashedBytes).Replace("-", "").ToLowerInvariant();
-            }
+            return PasswordHelper.HashPassword(password);
         }
 
         // Vérifier l'unicité d'un username
@@ -404,7 +400,7 @@ public async Task<List<UserViewModel>> GetAllUsersAsync()
         }
 
         // Vérifier les identifiants de connexion
-        public async Task<User?> ValidateCredentialsAsync(string username, string password)
+    public async Task<User?> ValidateCredentialsAsync(string username, string password)
         {
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
                 return null;
@@ -413,8 +409,8 @@ public async Task<List<UserViewModel>> GetAllUsersAsync()
             if (user == null || !user.Active)
                 return null;
                 
-            var hashedPassword = HashPassword(password);
-            return user.MotDePasseHash == hashedPassword ? user : null;
+            // Utiliser PasswordHelper pour la vérification
+            return PasswordHelper.VerifyPassword(password, user.MotDePasseHash) ? user : null;
         }
     }
 }

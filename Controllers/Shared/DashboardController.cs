@@ -1,34 +1,38 @@
-using System.Diagnostics;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PGSA_Licence3.Models;
-
-namespace PGSA_Licence3.Controllers
+using PGSA_Licence3.Services.Auth;
+using System.Security.Claims;
+using PGSA_Licence3.Data; 
+namespace PGSA_Licence3.Controllers.Shared
 {
-    [Route("dashboard")]
-    public class DashboardController : Controller
-    {
-        private readonly ILogger< DashboardController> _logger;
+   [Route("dashboard")]
+[Authorize] 
+public class DashboardController : Controller
+{
+    private readonly LoginService _loginService;
+    private readonly ILogger<DashboardController> _logger;
 
-        public DashboardController(ILogger<DashboardController> logger)
-        {
-            _logger = logger;
-        }
-
-       [HttpGet("index")]
-    public IActionResult Index()
+    public DashboardController(ILogger<DashboardController> logger, ApplicationDbContext db)
     {
-        return View("~/Views/DashboardIndex.cshtml");
+        _logger = logger;
+        _loginService = new LoginService(db); // instanciation manuelle
     }
 
-        public IActionResult Privacy()
-        {
-            return View();
-        }
+    [HttpGet("index")]
+    public async Task<IActionResult> Index()
+    {
+        var email = User.FindFirstValue(ClaimTypes.Email);
+        if (email == null)
+            return RedirectToAction("Index", "Login");
 
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-        }
+        var user = await _loginService.GetUserByEmailAsync(email);
+        if (user == null)
+            return RedirectToAction("Index", "Login");
+
+        return View("~/Views/DashboardIndex.cshtml", user);
     }
+}
+
+    
 }
