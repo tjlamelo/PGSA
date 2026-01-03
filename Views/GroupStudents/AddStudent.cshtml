@@ -1,0 +1,80 @@
+@model PGSA_Licence3.Models.Groupe
+@{
+    ViewData["Title"] = $"Ajouter des étudiants - {Model.Nom}";
+    ViewData["Breadcrumb"] = new List<(string Text, string Url)>
+    {
+        ("Gestion des Groupes", "/Groups"),
+        (Model.Nom, $"/Groups/Details/{Model.Id}"),
+        ("Ajouter étudiants", $"/GroupStudents/AddStudent/{Model.Id}")
+    };
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title mb-0">
+                    <i class="fas fa-user-plus me-2"></i>
+                    Ajouter des étudiants au groupe @Model.Nom
+                </h4>
+            </div>
+            <div class="card-body">
+                <form asp-action="AddStudent" asp-route-id="@Model.Id" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label class="form-label">Étudiants disponibles</label>
+                                <select id="studentsSelect" name="selectedStudentIds" multiple class="form-select" size="10">
+                                    @foreach (var student in ViewBag.AvailableStudents)
+                                    {
+                                        <option value="@student.Id">@student.Nom @student.Prenom (@student.NumeroEtudiant)</option>
+                                    }
+                                </select>
+                                <div class="form-text">Maintenez Ctrl (ou Cmd) pour sélectionner plusieurs étudiants</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title">Informations du groupe</h6>
+                                    <p class="mb-1"><strong>Nom:</strong> @Model.Nom</p>
+                                    <p class="mb-1"><strong>Niveau:</strong> @Model.Niveau</p>
+                                    <p class="mb-1"><strong>Filière:</strong> @Model.Filiere</p>
+                                    <p class="mb-0"><strong>Étudiants actuels:</strong> @(Model.Etudiants?.Count ?? 0)</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-plus me-2"></i>
+                                    Ajouter les étudiants sélectionnés
+                                </button>
+                                <a asp-action="Details" asp-controller="Groups" asp-route-id="@Model.Id" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left me-2"></i>
+                                    Retour aux détails
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Améliorer la sélection multiple
+        document.getElementById('studentsSelect').addEventListener('change', function() {
+            const selectedCount = this.selectedOptions.length;
+            const submitBtn = document.querySelector('button[type="submit"]');
+            submitBtn.innerHTML = `<i class="fas fa-plus me-2"></i>Ajouter ${selectedCount} étudiant(s)`;
+        });
+    </script>
+}

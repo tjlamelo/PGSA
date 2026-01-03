@@ -1,0 +1,435 @@
+@{
+    ViewData["Title"] = "Créer des groupes équilibrés";
+    ViewData["Breadcrumb"] = new List<(string Text, string Url)>
+    {
+        ("Gestion des Groupes", "/Groups"),
+        ("Groupes équilibrés", "/Groups/CreateEquilibres")
+    };
+    Layout = "_DashboardLayout";
+}
+
+<div class="container-fluid mt-4 fade-in">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-4 border-0 text-center">
+                    <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 60px; height: 60px;">
+                        <i class="bi bi-arrow-left-right fs-2"></i>
+                    </div>
+                    <h2 class="h4 mb-0 text-gray-800">@ViewData["Title"]</h2>
+                    <p class="text-muted mb-0 mt-2">Créez automatiquement des groupes équilibrés par première lettre du nom</p>
+                </div>
+
+                <div class="card-body p-4">
+                    <!-- Explication -->
+                    <div class="alert alert-info mb-4">
+                        <h6><i class="bi bi-info-circle me-2"></i>Comment ça marche ?</h6>
+                        <p class="mb-0">Ce système crée automatiquement des groupes équilibrés en répartissant les étudiants selon la première lettre de leur nom de famille. Par exemple, si vous créez 3 groupes, les étudiants dont le nom commence par A-D iront dans le groupe 1, E-H dans le groupe 2, etc.</p>
+                    </div>
+
+                    <form method="post" id="createEquilibresForm">
+                        @Html.AntiForgeryToken()
+
+                        <!-- Paramètres -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <label for="niveau" class="form-label fw-bold">Niveau <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-success text-white">
+                                        <i class="bi bi-bar-chart"></i>
+                                    </span>
+                                    <select class="form-select" id="niveau" name="niveau" required>
+                                        <option value="">Sélectionner...</option>
+                                        <option value="L1">L1</option>
+                                        <option value="L2">L2</option>
+                                        <option value="L3">L3</option>
+                                        <option value="M1">M1</option>
+                                        <option value="M2">M2</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="filiere" class="form-label fw-bold">Filière <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-success text-white">
+                                        <i class="bi bi-book"></i>
+                                    </span>
+                                    <select class="form-select" id="filiere" name="filiere" required>
+                                        <option value="">Sélectionner...</option>
+                                        <option value="Info">Informatique</option>
+                                        <option value="Math">Mathématiques</option>
+                                        <option value="Phys">Physique</option>
+                                        <option value="Chim">Chimie</option>
+                                        <option value="Bio">Biologie</option>
+                                        <option value="Lettres">Lettres</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="nombreGroupes" class="form-label fw-bold">Nombre de groupes <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-success text-white">
+                                        <i class="bi bi-hash"></i>
+                                    </span>
+                                    <input type="number" class="form-control" id="nombreGroupes" name="nombreGroupes"
+                                           min="2" max="10" value="3" required>
+                                </div>
+                                <div class="form-text">Entre 2 et 10 groupes</div>
+                            </div>
+                        </div>
+
+                        <!-- Aperçu de la répartition -->
+                        <div id="previewSection" class="mb-4" style="display: none;">
+                            <h5 class="mb-3">
+                                <i class="bi bi-eye me-2 text-success"></i>Aperçu de la répartition
+                            </h5>
+                            <div id="previewContent" class="row g-3">
+                                <!-- L'aperçu sera généré ici -->
+                            </div>
+                        </div>
+
+                        <!-- Statistiques des étudiants disponibles -->
+                        <div id="statsSection" class="mb-4">
+                            <h5 class="mb-3">
+                                <i class="bi bi-graph-up me-2 text-success"></i>Étudiants disponibles
+                            </h5>
+                            <div class="row g-3" id="statsContent">
+                                <div class="col-12">
+                                    <div class="alert alert-secondary">
+                                        <i class="bi bi-hourglass me-2"></i>
+                                        Sélectionnez un niveau et une filière pour voir les statistiques...
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="d-flex justify-content-between pt-4 border-top">
+                            <a href="@Url.Action("Index", "Groups")" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-1"></i>Retour à la liste
+                            </a>
+                            <div>
+                                <button type="button" class="btn btn-outline-success me-2" id="previewBtn" disabled>
+                                    <i class="bi bi-eye me-1"></i>Aperçu
+                                </button>
+                                <button type="submit" class="btn btn-success" id="createBtn" disabled>
+                                    <i class="bi bi-check-circle me-1"></i>Créer les groupes
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-success text-white border-0">
+                <h5 class="modal-title" id="confirmModalLabel">
+                    <i class="bi bi-check-circle me-2"></i>Confirmer la création
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir créer <strong id="groupCount"></strong> groupes équilibrés ?</p>
+                <div id="confirmDetails" class="alert alert-info">
+                    <!-- Les détails seront insérés ici -->
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="submit" form="createEquilibresForm" class="btn btn-success">
+                    <i class="bi bi-check-circle me-1"></i>Créer les groupes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("Page création groupes équilibrés chargée !");
+
+            // Animation de la carte
+            const card = document.querySelector('.card');
+            setTimeout(() => {
+                card.classList.add('fade-in');
+            }, 100);
+
+            // Éléments du formulaire
+            const niveauSelect = document.getElementById('niveau');
+            const filiereSelect = document.getElementById('filiere');
+            const nombreGroupesInput = document.getElementById('nombreGroupes');
+            const previewBtn = document.getElementById('previewBtn');
+            const createBtn = document.getElementById('createBtn');
+            const form = document.getElementById('createEquilibresForm');
+
+            // Gestionnaire d'événements
+            niveauSelect.addEventListener('change', updateStats);
+            filiereSelect.addEventListener('change', updateStats);
+            nombreGroupesInput.addEventListener('input', validateForm);
+
+            // Validation du formulaire
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                showConfirmModal();
+            });
+
+            previewBtn.addEventListener('click', generatePreview);
+        });
+
+        async function updateStats() {
+            const niveau = document.getElementById('niveau').value;
+            const filiere = document.getElementById('filiere').value;
+
+            if (!niveau || !filiere) {
+                document.getElementById('statsContent').innerHTML = `
+                    <div class="col-12">
+                        <div class="alert alert-secondary">
+                            <i class="bi bi-hourglass me-2"></i>
+                            Sélectionnez un niveau et une filière pour voir les statistiques...
+                        </div>
+                    </div>
+                `;
+                document.getElementById('previewBtn').disabled = true;
+                document.getElementById('createBtn').disabled = true;
+                return;
+            }
+
+            try {
+                // Charger les étudiants disponibles
+                const response = await fetch('/Groups/GetAvailableStudents');
+                const students = await response.json();
+
+                // Grouper par première lettre
+                const groupesParLettre = {};
+                students.forEach(student => {
+                    const firstLetter = student.text.charAt(0).toUpperCase();
+                    if (!groupesParLettre[firstLetter]) {
+                        groupesParLettre[firstLetter] = [];
+                    }
+                    groupesParLettre[firstLetter].push(student);
+                });
+
+                // Générer les statistiques
+                const letters = Object.keys(groupesParLettre).sort();
+                let totalStudents = students.length;
+
+                let statsHtml = `
+                    <div class="col-md-4">
+                        <div class="card border-primary">
+                            <div class="card-body text-center">
+                                <div class="text-primary mb-2">
+                                    <i class="bi bi-people display-6"></i>
+                                </div>
+                                <h5 class="card-title">${totalStudents}</h5>
+                                <p class="card-text text-muted">Étudiants disponibles</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card border-info">
+                            <div class="card-body text-center">
+                                <div class="text-info mb-2">
+                                    <i class="bi bi-type display-6"></i>
+                                </div>
+                                <h5 class="card-title">${letters.length}</h5>
+                                <p class="card-text text-muted">Lettres différentes</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card border-success">
+                            <div class="card-body text-center">
+                                <div class="text-success mb-2">
+                                    <i class="bi bi-bar-chart display-6"></i>
+                                </div>
+                                <h5 class="card-title">${Math.round(totalStudents / Math.max(letters.length, 1))}</h5>
+                                <p class="card-text text-muted">Moyenne par lettre</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Répartition détaillée
+                statsHtml += `
+                    <div class="col-12 mt-3">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">Répartition par lettre</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-2">
+                `;
+
+                letters.forEach(letter => {
+                    const count = groupesParLettre[letter].length;
+                    const percentage = totalStudents > 0 ? Math.round((count / totalStudents) * 100) : 0;
+                    statsHtml += `
+                        <div class="col-md-2 col-sm-3">
+                            <div class="text-center p-2 border rounded">
+                                <strong class="fs-5">${letter}</strong>
+                                <br><small class="text-muted">${count} (${percentage}%)</small>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                statsHtml += `
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                document.getElementById('statsContent').innerHTML = statsHtml;
+                validateForm();
+
+            } catch (error) {
+                console.error('Erreur lors du chargement des statistiques:', error);
+                document.getElementById('statsContent').innerHTML = `
+                    <div class="col-12">
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-circle me-2"></i>
+                            Erreur lors du chargement des statistiques.
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function validateForm() {
+            const niveau = document.getElementById('niveau').value;
+            const filiere = document.getElementById('filiere').value;
+            const nombreGroupes = parseInt(document.getElementById('nombreGroupes').value);
+
+            const isValid = niveau && filiere && nombreGroupes >= 2 && nombreGroupes <= 10;
+
+            document.getElementById('previewBtn').disabled = !isValid;
+            document.getElementById('createBtn').disabled = !isValid;
+        }
+
+        async function generatePreview() {
+            const nombreGroupes = parseInt(document.getElementById('nombreGroupes').value);
+
+            try {
+                const response = await fetch('/Groups/GetAvailableStudents');
+                const students = await response.json();
+
+                // Grouper par première lettre
+                const groupesParLettre = {};
+                students.forEach(student => {
+                    const firstLetter = student.text.charAt(0).toUpperCase();
+                    if (!groupesParLettre[firstLetter]) {
+                        groupesParLettre[firstLetter] = [];
+                    }
+                    groupesParLettre[firstLetter].push(student);
+                });
+
+                // Simuler la répartition
+                const letters = Object.keys(groupesParLettre).sort();
+                const groupes = [];
+
+                for (let i = 0; i < nombreGroupes; i++) {
+                    groupes.push({ name: `Groupe ${i + 1}`, students: [] });
+                }
+
+                let groupeIndex = 0;
+                letters.forEach(letter => {
+                    groupesParLettre[letter].forEach(student => {
+                        groupes[groupeIndex].students.push(student);
+                        groupeIndex = (groupeIndex + 1) % nombreGroupes;
+                    });
+                });
+
+                // Générer l'aperçu
+                let previewHtml = '';
+                groupes.forEach(groupe => {
+                    previewHtml += `
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">${groupe.name} (${groupe.students.length} étudiants)</h6>
+                                </div>
+                                <div class="card-body" style="max-height: 200px; overflow-y: auto;">
+                                    ${groupe.students.length > 0 ?
+                                        '<ul class="list-group list-group-flush">' +
+                                        groupe.students.map(s => `<li class="list-group-item py-1 px-2">${s.text}</li>`).join('') +
+                                        '</ul>' :
+                                        '<p class="text-muted mb-0">Aucun étudiant</p>'
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                document.getElementById('previewContent').innerHTML = previewHtml;
+                document.getElementById('previewSection').style.display = 'block';
+
+            } catch (error) {
+                console.error('Erreur lors de la génération de l\'aperçu:', error);
+            }
+        }
+
+        function showConfirmModal() {
+            const nombreGroupes = document.getElementById('nombreGroupes').value;
+            const niveau = document.getElementById('niveau').options[document.getElementById('niveau').selectedIndex].text;
+            const filiere = document.getElementById('filiere').options[document.getElementById('filiere').selectedIndex].text;
+
+            document.getElementById('groupCount').textContent = nombreGroupes;
+            document.getElementById('confirmDetails').innerHTML = `
+                <strong>Niveau:</strong> ${niveau}<br>
+                <strong>Filière:</strong> ${filiere}<br>
+                <strong>Nombre de groupes:</strong> ${nombreGroupes}
+            `;
+
+            new bootstrap.Modal(document.getElementById('confirmModal')).show();
+        }
+    </script>
+
+    <style>
+        .card {
+            border-radius: 0.75rem;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+
+        .card-header {
+            border-radius: 0.75rem 0.75rem 0 0 !important;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @@keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .btn-success {
+            background: var(--success);
+            border-color: var(--success);
+        }
+
+        .btn-success:hover {
+            background: #00b97e;
+            border-color: #00b97e;
+        }
+
+        .border-primary { border-color: var(--primary) !important; }
+        .border-info { border-color: var(--info) !important; }
+        .border-success { border-color: var(--success) !important; }
+
+        .text-primary { color: var(--primary) !important; }
+        .text-info { color: var(--info) !important; }
+        .text-success { color: var(--success) !important; }
+    </style>
+}

@@ -1,5 +1,7 @@
 using PGSA_Licence3.Data;
 using Microsoft.EntityFrameworkCore;
+using PGSA_Licence3.Services.Groupes_Management;
+using PGSA_Licence3.Services.Students;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,6 +9,18 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+
+// 🔹 Enregistrer les services de gestion des groupes
+builder.Services.AddScoped<CreateGroupeService>();
+builder.Services.AddScoped<UpdateGroupeService>();
+builder.Services.AddScoped<GetGroupesService>();
+builder.Services.AddScoped<GetGroupeDetailsService>();
+builder.Services.AddScoped<DeleteGroupeService>();
+builder.Services.AddScoped<AddStudentToGroupeService>();
+builder.Services.AddScoped<RemoveStudentFromGroupeService>();
+builder.Services.AddScoped<ImportStudentsToGroupeService>();
+builder.Services.AddScoped<SaveImportedStudentsService>();
+builder.Services.AddScoped<StudentImportService>();
 
 // 🔹 Ajouter les controllers avec Razor Runtime Compilation
 builder.Services.AddControllersWithViews()

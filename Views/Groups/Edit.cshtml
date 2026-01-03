@@ -1,0 +1,258 @@
+@model PGSA_Licence3.Models.Groupe
+@{
+    ViewData["Title"] = $"Modifier le groupe {Model.Nom}";
+    ViewData["Breadcrumb"] = new List<(string Text, string Url)>
+    {
+        ("Gestion des Groupes", "/Groups"),
+        (Model.Nom, $"/Groups/Details/{Model.Id}"),
+        ("Modifier", $"/Groups/Edit/{Model.Id}")
+    };
+    Layout = "_DashboardLayout";
+}
+
+<div class="container-fluid mt-4 fade-in">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-4 border-0 text-center">
+                    <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 60px; height: 60px;">
+                        <i class="bi bi-pencil-square fs-2"></i>
+                    </div>
+                    <h2 class="h4 mb-0 text-gray-800">@ViewData["Title"]</h2>
+                    <p class="text-muted mb-0 mt-2">Modifiez les informations du groupe</p>
+                </div>
+
+                <div class="card-body p-4">
+                    <form method="post" id="editForm">
+                        @Html.AntiForgeryToken()
+
+                        <!-- Informations actuelles -->
+                        <div class="alert alert-info mb-4">
+                            <h6><i class="bi bi-info-circle me-2"></i>Informations actuelles</h6>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <strong>Nom:</strong> @Model.Nom
+                                </div>
+                                <div class="col-md-4">
+                                    <strong>Niveau:</strong> @Model.Niveau
+                                </div>
+                                <div class="col-md-4">
+                                    <strong>Filière:</strong> @Model.Filiere
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <strong>Étudiants:</strong> @(Model.Etudiants?.Count ?? 0)
+                                <small class="text-muted">• Créé le @Model.CreatedAt.ToString("dd/MM/yyyy")</small>
+                            </div>
+                        </div>
+
+                        <!-- Nouveaux champs -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label for="nom" class="form-label fw-bold">Nouveau nom <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-secondary text-white">
+                                        <i class="bi bi-tag"></i>
+                                    </span>
+                                    <input type="text" class="form-control" id="nom" name="nom"
+                                           value="@Model.Nom" placeholder="Nouveau nom du groupe" required>
+                                </div>
+                                <div class="form-text">Laissez vide pour garder le nom actuel</div>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label for="niveau" class="form-label fw-bold">Nouveau niveau <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-secondary text-white">
+                                        <i class="bi bi-bar-chart"></i>
+                                    </span>
+                                    <select class="form-select" id="niveau" name="niveau" required>
+                                        <option value="@Model.Niveau" selected>@Model.Niveau</option>
+                                        <option value="L1">L1</option>
+                                        <option value="L2">L2</option>
+                                        <option value="L3">L3</option>
+                                        <option value="M1">M1</option>
+                                        <option value="M2">M2</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label for="filiere" class="form-label fw-bold">Nouvelle filière <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-secondary text-white">
+                                        <i class="bi bi-book"></i>
+                                    </span>
+                                    <select class="form-select" id="filiere" name="filiere" required>
+                                        <option value="@Model.Filiere" selected>@Model.Filiere</option>
+                                        <option value="Info">Informatique</option>
+                                        <option value="Math">Mathématiques</option>
+                                        <option value="Phys">Physique</option>
+                                        <option value="Chim">Chimie</option>
+                                        <option value="Bio">Biologie</option>
+                                        <option value="Lettres">Lettres</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Aperçu des changements -->
+                        <div id="previewSection" class="mb-4" style="display: none;">
+                            <h5 class="mb-3">
+                                <i class="bi bi-eye me-2 text-secondary"></i>Aperçu des modifications
+                            </h5>
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <strong>Nom:</strong> <span id="previewNom">@Model.Nom</span>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <strong>Niveau:</strong> <span id="previewNiveau">@Model.Niveau</span>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <strong>Filière:</strong> <span id="previewFiliere">@Model.Filiere</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="d-flex justify-content-between pt-4 border-top">
+                            <a href="@Url.Action("Details", "Groups", new { id = Model.Id })" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-1"></i>Retour aux détails
+                            </a>
+                            <div>
+                                <button type="button" class="btn btn-outline-secondary me-2" onclick="togglePreview()">
+                                    <i class="bi bi-eye me-1"></i>Aperçu
+                                </button>
+                                <button type="submit" class="btn btn-secondary">
+                                    <i class="bi bi-check-circle me-1"></i>Enregistrer les modifications
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("Page modification groupe chargée !");
+
+            // Animation de la carte
+            const card = document.querySelector('.card');
+            setTimeout(() => {
+                card.classList.add('fade-in');
+            }, 100);
+
+            // Gestionnaires d'événements pour la prévisualisation
+            const nomInput = document.getElementById('nom');
+            const niveauSelect = document.getElementById('niveau');
+            const filiereSelect = document.getElementById('filiere');
+
+            [nomInput, niveauSelect, filiereSelect].forEach(element => {
+                element.addEventListener('input', updatePreview);
+                element.addEventListener('change', updatePreview);
+            });
+
+            // Validation du formulaire
+            const form = document.getElementById('editForm');
+            form.addEventListener('submit', function(e) {
+                const nom = document.getElementById('nom').value.trim();
+                const niveau = document.getElementById('niveau').value;
+                const filiere = document.getElementById('filiere').value;
+
+                if (!nom || !niveau || !filiere) {
+                    e.preventDefault();
+                    alert('Veuillez remplir tous les champs obligatoires.');
+                    return false;
+                }
+
+                // Vérifier s'il y a des changements
+                const hasChanges = nom !== '@Model.Nom' ||
+                                 niveau !== '@Model.Niveau' ||
+                                 filiere !== '@Model.Filiere';
+
+                if (!hasChanges) {
+                    e.preventDefault();
+                    alert('Aucune modification détectée.');
+                    return false;
+                }
+            });
+        });
+
+        function updatePreview() {
+            const nom = document.getElementById('nom').value.trim() || '@Model.Nom';
+            const niveau = document.getElementById('niveau').value;
+            const filiere = document.getElementById('filiere').value;
+
+            document.getElementById('previewNom').textContent = nom;
+            document.getElementById('previewNiveau').textContent = niveau;
+            document.getElementById('previewFiliere').textContent = filiere;
+        }
+
+        function togglePreview() {
+            const previewSection = document.getElementById('previewSection');
+            const isVisible = previewSection.style.display !== 'none';
+
+            if (!isVisible) {
+                updatePreview();
+                previewSection.style.display = 'block';
+                // Scroll vers l'aperçu
+                previewSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            } else {
+                previewSection.style.display = 'none';
+            }
+        }
+    </script>
+
+    <style>
+        .card {
+            border-radius: 0.75rem;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+
+        .card-header {
+            border-radius: 0.75rem 0.75rem 0 0 !important;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @@keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .btn-secondary {
+            background: var(--dark);
+            border-color: var(--dark);
+        }
+
+        .btn-secondary:hover {
+            background: #343a40;
+            border-color: #343a40;
+        }
+
+        .bg-light {
+            background-color: #f8f9fa !important;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--dark);
+            box-shadow: 0 0 0 0.2rem rgba(52, 58, 64, 0.25);
+        }
+
+        .input-group-text {
+            background: var(--dark);
+            border-color: var(--dark);
+            color: white;
+        }
+    </style>
+}

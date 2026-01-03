@@ -1,0 +1,375 @@
+@{
+    ViewData["Title"] = "Créer un groupe";
+    ViewData["Breadcrumb"] = new List<(string Text, string Url)>
+    {
+        ("Gestion des Groupes", "/Groups"),
+        ("Créer", "/Groups/Create")
+    };
+    Layout = "_DashboardLayout";
+}
+
+<div class="container-fluid mt-4 fade-in">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-4 border-0 text-center">
+                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 60px; height: 60px;">
+                        <i class="bi bi-plus-circle fs-2"></i>
+                    </div>
+                    <h2 class="h4 mb-0 text-gray-800">@ViewData["Title"]</h2>
+                    <p class="text-muted mb-0 mt-2">Créez un nouveau groupe d'étudiants</p>
+                </div>
+
+                <div class="card-body p-4">
+                    <form method="post" id="createForm">
+                        @Html.AntiForgeryToken()
+
+                        <!-- Informations de base -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label for="nom" class="form-label fw-bold">Nom du groupe <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-primary text-white">
+                                        <i class="bi bi-tag"></i>
+                                    </span>
+                                    <input type="text" class="form-control" id="nom" name="nom" placeholder="Ex: Groupe A, TD1, etc." required>
+                                </div>
+                                <div class="form-text">Choisissez un nom descriptif pour votre groupe</div>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label for="niveau" class="form-label fw-bold">Niveau <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-primary text-white">
+                                        <i class="bi bi-bar-chart"></i>
+                                    </span>
+                                    <select class="form-select" id="niveau" name="niveau" required>
+                                        <option value="">Sélectionner...</option>
+                                        <option value="L1">L1</option>
+                                        <option value="L2">L2</option>
+                                        <option value="L3">L3</option>
+                                        <option value="M1">M1</option>
+                                        <option value="M2">M2</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label for="filiere" class="form-label fw-bold">Filière <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-primary text-white">
+                                        <i class="bi bi-book"></i>
+                                    </span>
+                                    <select class="form-select" id="filiere" name="filiere" required>
+                                        <option value="">Sélectionner...</option>
+                                        <option value="Info">Informatique</option>
+                                        <option value="Math">Mathématiques</option>
+                                        <option value="Phys">Physique</option>
+                                        <option value="Chim">Chimie</option>
+                                        <option value="Bio">Biologie</option>
+                                        <option value="Lettres">Lettres</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Méthode de création -->
+                        <div class="mb-4">
+                            <h5 class="mb-3">
+                                <i class="bi bi-gear me-2 text-primary"></i>Méthode de création
+                            </h5>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="creationMethod" id="methodManual" value="manual" checked>
+                                        <label class="form-check-label" for="methodManual">
+                                            <strong>Sélection manuelle</strong>
+                                            <br><small class="text-muted">Choisissez vous-même les étudiants à ajouter</small>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="creationMethod" id="methodRandom" value="random">
+                                        <label class="form-check-label" for="methodRandom">
+                                            <strong>Aléatoire</strong>
+                                            <br><small class="text-muted">Répartition aléatoire des étudiants disponibles</small>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="creationMethod" id="methodAlphabetical" value="alphabetical">
+                                        <label class="form-check-label" for="methodAlphabetical">
+                                            <strong>Alphabétique</strong>
+                                            <br><small class="text-muted">Tri par nom et prénom</small>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="creationMethod" id="methodEmpty" value="empty">
+                                        <label class="form-check-label" for="methodEmpty">
+                                            <strong>Groupe vide</strong>
+                                            <br><small class="text-muted">Créer le groupe sans étudiants</small>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sélection des étudiants (visible seulement en mode manuel) -->
+                        <div id="studentSelection" class="mb-4" style="display: none;">
+                            <h5 class="mb-3">
+                                <i class="bi bi-people me-2 text-primary"></i>Sélection des étudiants
+                            </h5>
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle me-2"></i>
+                                Chargez la liste des étudiants disponibles...
+                            </div>
+                            <div id="studentList" class="row g-2" style="max-height: 300px; overflow-y: auto;">
+                                <!-- Les étudiants seront chargés ici -->
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="d-flex justify-content-between pt-4 border-top">
+                            <a href="@Url.Action("Index", "Groups")" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-1"></i>Retour à la liste
+                            </a>
+                            <div>
+                                <button type="button" class="btn btn-outline-primary me-2" onclick="previewGroup()">
+                                    <i class="bi bi-eye me-1"></i>Aperçu
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check-circle me-1"></i>Créer le groupe
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal d'aperçu -->
+<div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white border-0">
+                <h5 class="modal-title" id="previewModalLabel">
+                    <i class="bi bi-eye me-2"></i>Aperçu du groupe
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="previewContent">
+                    <!-- L'aperçu sera généré ici -->
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("Page création groupe chargée !");
+
+            // Animation de la carte
+            const card = document.querySelector('.card');
+            setTimeout(() => {
+                card.classList.add('fade-in');
+            }, 100);
+
+            // Gestion des méthodes de création
+            const creationMethods = document.querySelectorAll('input[name="creationMethod"]');
+            const studentSelection = document.getElementById('studentSelection');
+
+            creationMethods.forEach(method => {
+                method.addEventListener('change', function() {
+                    if (this.value === 'manual') {
+                        studentSelection.style.display = 'block';
+                        loadAvailableStudents();
+                    } else {
+                        studentSelection.style.display = 'none';
+                    }
+                });
+            });
+
+            // Validation du formulaire
+            const form = document.getElementById('createForm');
+            form.addEventListener('submit', function(e) {
+                const nom = document.getElementById('nom').value.trim();
+                const niveau = document.getElementById('niveau').value;
+                const filiere = document.getElementById('filiere').value;
+
+                if (!nom || !niveau || !filiere) {
+                    e.preventDefault();
+                    alert('Veuillez remplir tous les champs obligatoires.');
+                    return false;
+                }
+            });
+        });
+
+        async function loadAvailableStudents() {
+            try {
+                const response = await fetch('/Groups/GetAvailableStudents');
+                const students = await response.json();
+
+                const studentList = document.getElementById('studentList');
+                studentList.innerHTML = '';
+
+                if (students.length === 0) {
+                    studentList.innerHTML = `
+                        <div class="col-12">
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                Aucun étudiant disponible. Tous les étudiants sont déjà dans des groupes.
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                students.forEach(student => {
+                    const studentCard = document.createElement('div');
+                    studentCard.className = 'col-md-6';
+                    studentCard.innerHTML = `
+                        <div class="form-check student-card">
+                            <input class="form-check-input" type="checkbox" name="selectedStudentIds" value="${student.id}" id="student_${student.id}">
+                            <label class="form-check-label w-100" for="student_${student.id}">
+                                <div class="d-flex align-items-center p-2 border rounded">
+                                    <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 35px; height: 35px;">
+                                        <i class="bi bi-person"></i>
+                                    </div>
+                                    <div>
+                                        <strong>${student.text}</strong>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                    `;
+                    studentList.appendChild(studentCard);
+                });
+
+                // Mettre à jour le compteur
+                updateStudentCount();
+
+            } catch (error) {
+                console.error('Erreur lors du chargement des étudiants:', error);
+                document.getElementById('studentList').innerHTML = `
+                    <div class="col-12">
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-circle me-2"></i>
+                            Erreur lors du chargement des étudiants.
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function updateStudentCount() {
+            const selectedStudents = document.querySelectorAll('input[name="selectedStudentIds"]:checked');
+            // Vous pouvez ajouter un compteur ici si nécessaire
+        }
+
+        function previewGroup() {
+            const nom = document.getElementById('nom').value.trim();
+            const niveau = document.getElementById('niveau').value;
+            const filiere = document.getElementById('filiere').value;
+            const method = document.querySelector('input[name="creationMethod"]:checked').value;
+            const selectedStudents = document.querySelectorAll('input[name="selectedStudentIds"]:checked');
+
+            let previewContent = `
+                <div class="mb-3">
+                    <h6>Informations du groupe</h6>
+                    <p><strong>Nom:</strong> ${nom || 'Non défini'}</p>
+                    <p><strong>Niveau:</strong> ${niveau || 'Non défini'}</p>
+                    <p><strong>Filière:</strong> ${filiere || 'Non défini'}</p>
+                </div>
+                <div class="mb-3">
+                    <h6>Méthode de création</h6>
+                    <p>${getMethodLabel(method)}</p>
+                </div>
+            `;
+
+            if (method === 'manual') {
+                previewContent += `
+                    <div>
+                        <h6>Étudiants sélectionnés (${selectedStudents.length})</h6>
+                        ${selectedStudents.length > 0 ?
+                            '<ul>' + Array.from(selectedStudents).map(s => `<li>${s.nextElementSibling.querySelector('strong').textContent}</li>`).join('') + '</ul>' :
+                            '<p class="text-muted">Aucun étudiant sélectionné</p>'
+                        }
+                    </div>
+                `;
+            }
+
+            document.getElementById('previewContent').innerHTML = previewContent;
+            new bootstrap.Modal(document.getElementById('previewModal')).show();
+        }
+
+        function getMethodLabel(method) {
+            const labels = {
+                'manual': 'Sélection manuelle des étudiants',
+                'random': 'Répartition aléatoire',
+                'alphabetical': 'Tri alphabétique',
+                'empty': 'Groupe vide (sans étudiants)'
+            };
+            return labels[method] || method;
+        }
+    </script>
+
+    <style>
+        .card {
+            border-radius: 0.75rem;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+
+        .card-header {
+            border-radius: 0.75rem 0.75rem 0 0 !important;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @@keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-check-input:checked {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .student-card {
+            transition: all 0.3s ease;
+        }
+
+        .student-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .student-card .form-check-label {
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .btn-primary:hover {
+            background: var(--secondary);
+            border-color: var(--secondary);
+        }
+    </style>
+}

@@ -1,0 +1,362 @@
+@model IEnumerable<PGSA_Licence3.Models.Groupe>
+@{
+    ViewData["Title"] = "Gestion des Groupes";
+    ViewData["Breadcrumb"] = new List<(string Text, string Url)>
+    {
+        ("Gestion des Groupes", "/Groups")
+    };
+    Layout = "_DashboardLayout";
+}
+
+<div class="container-fluid mt-4 fade-in">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header avec actions -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="h5 mb-0 text-gray-800">@ViewData["Title"]</h2>
+                        <p class="text-muted mb-0 mt-1">Gérez les groupes d'étudiants et leur composition</p>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <a href="@Url.Action("CreateEquilibres", "Groups")" class="btn btn-success btn-sm">
+                            <i class="bi bi-plus-circle me-1"></i>Créer groupes équilibrés
+                        </a>
+                        <a href="@Url.Action("Create", "Groups")" class="btn btn-primary btn-sm">
+                            <i class="bi bi-plus-circle me-1"></i>Créer un groupe
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filtres -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label for="filterNiveau" class="form-label">Niveau</label>
+                            <select class="form-select form-select-sm" id="filterNiveau">
+                                <option value="">Tous les niveaux</option>
+                                <option value="L1">L1</option>
+                                <option value="L2">L2</option>
+                                <option value="L3">L3</option>
+                                <option value="M1">M1</option>
+                                <option value="M2">M2</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="filterFiliere" class="form-label">Filière</label>
+                            <select class="form-select form-select-sm" id="filterFiliere">
+                                <option value="">Toutes les filières</option>
+                                <option value="Info">Informatique</option>
+                                <option value="Math">Mathématiques</option>
+                                <option value="Phys">Physique</option>
+                                <option value="Chim">Chimie</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="filterSearch" class="form-label">Recherche</label>
+                            <input type="text" class="form-control form-control-sm" id="filterSearch" placeholder="Nom du groupe...">
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button class="btn btn-outline-secondary btn-sm w-100" id="resetFilters">
+                                <i class="bi bi-x-circle me-1"></i>Réinitialiser
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistiques -->
+            <div class="row g-3 mb-4" id="statsRow">
+                <div class="col-md-3">
+                    <div class="card shadow-sm border-0 text-center">
+                        <div class="card-body py-3">
+                            <div class="text-primary mb-2">
+                                <i class="bi bi-collection display-6"></i>
+                            </div>
+                            <h4 class="h6 mb-1">Total Groupes</h4>
+                            <span class="h3 text-primary" id="totalGroupes">@Model.Count()</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card shadow-sm border-0 text-center">
+                        <div class="card-body py-3">
+                            <div class="text-success mb-2">
+                                <i class="bi bi-people display-6"></i>
+                            </div>
+                            <h4 class="h6 mb-1">Total Étudiants</h4>
+                            <span class="h3 text-success" id="totalEtudiants">@Model.Sum(g => g.Etudiants?.Count ?? 0)</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card shadow-sm border-0 text-center">
+                        <div class="card-body py-3">
+                            <div class="text-info mb-2">
+                                <i class="bi bi-bar-chart display-6"></i>
+                            </div>
+                            <h4 class="h6 mb-1">Moyenne par groupe</h4>
+                            <span class="h3 text-info" id="moyenneGroupe">@(Model.Any() ? Math.Round(Model.Average(g => g.Etudiants?.Count ?? 0), 1) : 0)</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card shadow-sm border-0 text-center">
+                        <div class="card-body py-3">
+                            <div class="text-warning mb-2">
+                                <i class="bi bi-graph-up display-6"></i>
+                            </div>
+                            <h4 class="h6 mb-1">Groupes actifs</h4>
+                            <span class="h3 text-warning" id="groupesActifs">@Model.Count(g => (g.Etudiants?.Count ?? 0) > 0)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Liste des groupes -->
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3 border-0">
+                    <h5 class="mb-0">Liste des groupes</h5>
+                </div>
+                <div class="card-body">
+                    @if (!Model.Any())
+                    {
+                        <div class="text-center py-5">
+                            <i class="bi bi-collection display-4 text-muted mb-3"></i>
+                            <h5 class="text-muted">Aucun groupe trouvé</h5>
+                            <p class="text-muted">Commencez par créer votre premier groupe.</p>
+                            <a href="@Url.Action("Create", "Groups")" class="btn btn-primary">
+                                <i class="bi bi-plus-circle me-1"></i>Créer un groupe
+                            </a>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="groupesTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Nom</th>
+                                        <th>Niveau</th>
+                                        <th>Filière</th>
+                                        <th>Étudiants</th>
+                                        <th>Créé le</th>
+                                        <th class="text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var groupe in Model.OrderBy(g => g.Nom))
+                                    {
+                                        <tr class="groupe-row" data-niveau="@groupe.Niveau" data-filiere="@groupe.Filiere" data-nom="@groupe.Nom.ToLower()">
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                                        <i class="bi bi-collection"></i>
+                                                    </div>
+                                                    <div>
+                                                        <h6 class="mb-0">@groupe.Nom</h6>
+                                                        <small class="text-muted">ID: @groupe.Id</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-secondary">@groupe.Niveau</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-info">@groupe.Filiere</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-success">@(groupe.Etudiants?.Count ?? 0) étudiant(s)</span>
+                                            </td>
+                                            <td>
+                                                <small class="text-muted">@groupe.CreatedAt.ToString("dd/MM/yyyy")</small>
+                                            </td>
+                                            <td class="text-end">
+                                                <div class="btn-group" role="group">
+                                                    <a href="@Url.Action("Details", "Groups", new { id = groupe.Id })" class="btn btn-sm btn-outline-primary" title="Voir les détails">
+                                                        <i class="bi bi-eye"></i>
+                                                    </a>
+                                                    <a href="@Url.Action("Edit", "Groups", new { id = groupe.Id })" class="btn btn-sm btn-outline-secondary" title="Modifier">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </a>
+                                                    <a href="@Url.Action("AddStudent", "Groups", new { id = groupe.Id })" class="btn btn-sm btn-outline-success" title="Ajouter des étudiants">
+                                                        <i class="bi bi-person-plus"></i>
+                                                    </a>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" title="Supprimer"
+                                                            onclick="confirmDelete(@groupe.Id, '@groupe.Nom')">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-danger text-white border-0">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="bi bi-exclamation-triangle me-2"></i>Confirmer la suppression
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir supprimer le groupe <strong id="deleteGroupeName"></strong> ?</p>
+                <div class="alert alert-warning">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Cette action est irréversible et supprimera également toutes les associations avec les étudiants.
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <form id="deleteForm" method="post" style="display: inline;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash me-1"></i>Supprimer
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("Page gestion des groupes chargée !");
+
+            // Animation des cartes
+            const cards = document.querySelectorAll('.card');
+            cards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.classList.add('fade-in');
+                }, index * 100);
+            });
+
+            // Filtres
+            const filterNiveau = document.getElementById('filterNiveau');
+            const filterFiliere = document.getElementById('filterFiliere');
+            const filterSearch = document.getElementById('filterSearch');
+            const resetFilters = document.getElementById('resetFilters');
+            const groupeRows = document.querySelectorAll('.groupe-row');
+
+            function applyFilters() {
+                const niveauValue = filterNiveau.value.toLowerCase();
+                const filiereValue = filterFiliere.value.toLowerCase();
+                const searchValue = filterSearch.value.toLowerCase();
+
+                groupeRows.forEach(row => {
+                    const niveau = row.dataset.niveau.toLowerCase();
+                    const filiere = row.dataset.filiere.toLowerCase();
+                    const nom = row.dataset.nom;
+
+                    const niveauMatch = !niveauValue || niveau === niveauValue;
+                    const filiereMatch = !filiereValue || filiere === filiereValue;
+                    const searchMatch = !searchValue || nom.includes(searchValue);
+
+                    row.style.display = (niveauMatch && filiereMatch && searchMatch) ? '' : 'none';
+                });
+
+                updateStats();
+            }
+
+            filterNiveau.addEventListener('change', applyFilters);
+            filterFiliere.addEventListener('change', applyFilters);
+            filterSearch.addEventListener('input', applyFilters);
+
+            resetFilters.addEventListener('click', function() {
+                filterNiveau.value = '';
+                filterFiliere.value = '';
+                filterSearch.value = '';
+                groupeRows.forEach(row => row.style.display = '');
+                updateStats();
+            });
+
+            function updateStats() {
+                const visibleRows = document.querySelectorAll('.groupe-row:not([style*="display: none"])');
+                let totalEtudiants = 0;
+                let groupesActifs = 0;
+
+                visibleRows.forEach(row => {
+                    const etudiantsText = row.querySelector('td:nth-child(4) .badge').textContent;
+                    const count = parseInt(etudiantsText.replace(/\D/g, ''));
+                    totalEtudiants += count;
+                    if (count > 0) groupesActifs++;
+                });
+
+                const moyenne = visibleRows.length > 0 ? (totalEtudiants / visibleRows.length).toFixed(1) : 0;
+
+                document.getElementById('totalGroupes').textContent = visibleRows.length;
+                document.getElementById('totalEtudiants').textContent = totalEtudiants;
+                document.getElementById('moyenneGroupe').textContent = moyenne;
+                document.getElementById('groupesActifs').textContent = groupesActifs;
+            }
+        });
+
+        function confirmDelete(groupeId, groupeName) {
+            document.getElementById('deleteGroupeName').textContent = groupeName;
+            document.getElementById('deleteForm').action = `/Groups/Delete/${groupeId}`;
+            new bootstrap.Modal(document.getElementById('deleteModal')).show();
+        }
+    </script>
+
+    <style>
+        .hover-lift {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .hover-lift:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: rgba(44, 123, 229, 0.05);
+        }
+
+        .btn-group .btn {
+            border-radius: 0.375rem !important;
+            margin-left: 2px;
+        }
+
+        .btn-group .btn:first-child {
+            margin-left: 0;
+        }
+
+        .badge {
+            font-weight: 500;
+            padding: 0.4em 0.8em;
+        }
+
+        .card {
+            border-radius: 0.75rem;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+
+        .card-header {
+            border-radius: 0.75rem 0.75rem 0 0 !important;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @@keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+}
