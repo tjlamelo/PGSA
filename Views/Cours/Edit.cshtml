@@ -1,0 +1,115 @@
+@model PGSA_Licence3.Models.Cours
+@{
+    ViewData["Title"] = $"Modifier le cours {Model.Nom}";
+    Layout = "_DashboardLayout";
+}
+
+<div class="container-fluid mt-4 fade-in">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3 border-0">
+                    <h4 class="mb-0">
+                        <i class="bi bi-pencil me-2 text-primary"></i>Modifier le cours
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="editForm">
+                        @Html.AntiForgeryToken()
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="nom" class="form-label fw-bold">Nom du cours <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="nom" name="nom" required value="@Model.Nom">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="code" class="form-label fw-bold">Code du cours <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="code" name="code" required value="@Model.Code">
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="niveau" class="form-label fw-bold">Niveau <span class="text-danger">*</span></label>
+                                <select class="form-select" id="niveau" name="niveau" required>
+                                    <option value="">Sélectionner...</option>
+                                    <option value="L1" selected="@(Model.Niveau == "L1")">L1</option>
+                                    <option value="L2" selected="@(Model.Niveau == "L2")">L2</option>
+                                    <option value="L3" selected="@(Model.Niveau == "L3")">L3</option>
+                                    <option value="M1" selected="@(Model.Niveau == "M1")">M1</option>
+                                    <option value="M2" selected="@(Model.Niveau == "M2")">M2</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="filiere" class="form-label fw-bold">Filière <span class="text-danger">*</span></label>
+                                <select class="form-select" id="filiere" name="filiere" required>
+                                    <option value="">Sélectionner...</option>
+                                    <option value="Info" selected="@(Model.Filiere == "Info")">Informatique</option>
+                                    <option value="Math" selected="@(Model.Filiere == "Math")">Mathématiques</option>
+                                    <option value="Phys" selected="@(Model.Filiere == "Phys")">Physique</option>
+                                    <option value="Chim" selected="@(Model.Filiere == "Chim")">Chimie</option>
+                                    <option value="Bio" selected="@(Model.Filiere == "Bio")">Biologie</option>
+                                    <option value="Lettres" selected="@(Model.Filiere == "Lettres")">Lettres</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="semestre" class="form-label fw-bold">Semestre <span class="text-danger">*</span></label>
+                                <select class="form-select" id="semestre" name="semestre" required>
+                                    <option value="">Sélectionner...</option>
+                                    <option value="S1" selected="@(Model.Semestre == "S1")">S1</option>
+                                    <option value="S2" selected="@(Model.Semestre == "S2")">S2</option>
+                                    <option value="S3" selected="@(Model.Semestre == "S3")">S3</option>
+                                    <option value="S4" selected="@(Model.Semestre == "S4")">S4</option>
+                                    <option value="S5" selected="@(Model.Semestre == "S5")">S5</option>
+                                    <option value="S6" selected="@(Model.Semestre == "S6")">S6</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="anneeAcademique" class="form-label fw-bold">Année académique <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="anneeAcademique" name="anneeAcademique" required min="2020" max="2030" value="@Model.AnneeAcademique">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="enseignantId" class="form-label fw-bold">Enseignant <span class="text-danger">*</span></label>
+                                <select class="form-select" id="enseignantId" name="enseignantId" required>
+                                    <option value="">Sélectionner...</option>
+                                    @foreach (var enseignant in ViewBag.Enseignants)
+                                    {
+                                        <option value="@enseignant.Id" selected="@(enseignant.Id == Model.EnseignantId)">@enseignant.Nom @enseignant.Prenom</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-check-circle me-1"></i>Enregistrer les modifications
+                                    </button>
+                                    <a href="@Url.Action("Index")" class="btn btn-secondary">
+                                        <i class="bi bi-arrow-left me-1"></i>Retour
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Sélectionner la bonne option pour le niveau
+        document.getElementById('niveau').value = '@Model.Niveau';
+        document.getElementById('filiere').value = '@Model.Filiere';
+        document.getElementById('semestre').value = '@Model.Semestre';
+    </script>
+}
+
+
+

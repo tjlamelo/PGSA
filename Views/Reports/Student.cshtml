@@ -1,0 +1,213 @@
+@model PGSA_Licence3.Services.Statistics.StudentStatisticsDto
+@{
+    var etudiant = ViewBag.Etudiant as PGSA_Licence3.Models.Etudiant;
+    ViewData["Title"] = $"Rapport individuel - {etudiant?.Nom} {etudiant?.Prenom}";
+    ViewData["Breadcrumb"] = new List<(string Text, string Url)>
+    {
+        ("Statistiques et Rapports", "/Reports"),
+        ("Rapport étudiant", $"/Reports/Student/{Model.EtudiantId}")
+    };
+    Layout = "_DashboardLayout";
+}
+
+<div class="container-fluid mt-4 fade-in">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-info text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                            <i class="bi bi-person-check fs-4"></i>
+                        </div>
+                        <div>
+                            <h2 class="h4 mb-0 text-gray-800">@etudiant?.Nom @etudiant?.Prenom</h2>
+                            <p class="text-muted mb-0 mt-1">@etudiant?.Matricule - @etudiant?.Niveau @etudiant?.Filiere</p>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="@Url.Action("ExportStudent", "Reports", new { id = Model.EtudiantId, format = "csv" })" class="btn btn-success btn-sm">
+                            <i class="bi bi-download me-1"></i>Exporter CSV
+                        </a>
+                        <a href="@Url.Action("Index", "Reports")" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-arrow-left me-1"></i>Retour
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filtres de période -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="dateDebut" class="form-label">Date de début</label>
+                            <input type="date" class="form-control" id="dateDebut" name="dateDebut" value="@(ViewBag.DateDebut?.ToString("yyyy-MM-dd") ?? Model.PeriodeDebut.ToString("yyyy-MM-dd"))">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="dateFin" class="form-label">Date de fin</label>
+                            <input type="date" class="form-control" id="dateFin" name="dateFin" value="@(ViewBag.DateFin?.ToString("yyyy-MM-dd") ?? Model.PeriodeFin.ToString("yyyy-MM-dd"))">
+                        </div>
+                        <input type="hidden" name="id" value="@Model.EtudiantId" />
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-funnel me-1"></i>Filtrer
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Statistiques principales -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <div class="card shadow-sm border-0 text-center">
+                        <div class="card-body py-3">
+                            <div class="text-primary mb-2">
+                                <i class="bi bi-calendar-check display-6"></i>
+                            </div>
+                            <h4 class="h6 mb-1">Total Séances</h4>
+                            <span class="h3 text-primary">@Model.TotalSeances</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card shadow-sm border-0 text-center">
+                        <div class="card-body py-3">
+                            <div class="text-success mb-2">
+                                <i class="bi bi-check-circle display-6"></i>
+                            </div>
+                            <h4 class="h6 mb-1">Présences</h4>
+                            <span class="h3 text-success">@Model.Presences</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card shadow-sm border-0 text-center">
+                        <div class="card-body py-3">
+                            <div class="text-danger mb-2">
+                                <i class="bi bi-x-circle display-6"></i>
+                            </div>
+                            <h4 class="h6 mb-1">Absences</h4>
+                            <span class="h3 text-danger">@Model.Absences</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card shadow-sm border-0 text-center">
+                        <div class="card-body py-3">
+                            <div class="text-warning mb-2">
+                                <i class="bi bi-clock-history display-6"></i>
+                            </div>
+                            <h4 class="h6 mb-1">Taux Assiduité</h4>
+                            <span class="h3 @(Model.TauxAssiduite >= 75 ? "text-success" : Model.TauxAssiduite >= 50 ? "text-warning" : "text-danger")">@Model.TauxAssiduite.ToString("F1")%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Détails -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-white py-3 border-0">
+                            <h5 class="mb-0">Détails des absences</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <strong>Absences justifiées:</strong> 
+                                <span class="badge bg-success">@Model.AbsencesJustifiees</span>
+                            </div>
+                            <div class="mb-3">
+                                <strong>Absences injustifiées:</strong> 
+                                <span class="badge bg-danger">@Model.AbsencesInjustifiees</span>
+                            </div>
+                            <div class="mb-3">
+                                <strong>Retards:</strong> 
+                                <span class="badge bg-warning">@Model.Retards</span>
+                            </div>
+                            <div>
+                                <strong>Durée totale des séances:</strong> @Model.DureeTotaleSeances.ToString("F1") heures
+                            </div>
+                            <div>
+                                <strong>Durée des absences:</strong> @Model.DureeAbsences.ToString("F1") heures
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-white py-3 border-0">
+                            <h5 class="mb-0">Période analysée</h5>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Du:</strong> @Model.PeriodeDebut.ToString("dd/MM/yyyy")</p>
+                            <p><strong>Au:</strong> @Model.PeriodeFin.ToString("dd/MM/yyyy")</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Détails par cours -->
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3 border-0">
+                    <h5 class="mb-0">Détails par cours</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.DetailsParCours == null || !Model.DetailsParCours.Any())
+                    {
+                        <div class="text-center py-5">
+                            <i class="bi bi-book display-4 text-muted mb-3"></i>
+                            <p class="text-muted">Aucune donnée disponible pour cette période.</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Cours</th>
+                                        <th>Code</th>
+                                        <th>Total Séances</th>
+                                        <th>Présences</th>
+                                        <th>Absences</th>
+                                        <th>Retards</th>
+                                        <th>Taux Assiduité</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var detail in Model.DetailsParCours)
+                                    {
+                                        <tr>
+                                            <td><strong>@detail.CoursNom</strong></td>
+                                            <td>@detail.CoursCode</td>
+                                            <td>@detail.TotalSeances</td>
+                                            <td><span class="badge bg-success">@detail.Presences</span></td>
+                                            <td><span class="badge bg-danger">@detail.Absences</span></td>
+                                            <td><span class="badge bg-warning">@detail.Retards</span></td>
+                                            <td>
+                                                <span class="badge @(detail.TauxAssiduite >= 75 ? "bg-success" : detail.TauxAssiduite >= 50 ? "bg-warning" : "bg-danger")">
+                                                    @detail.TauxAssiduite.ToString("F1")%
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <style>
+        .table-hover tbody tr:hover {
+            background-color: rgba(44, 123, 229, 0.05);
+        }
+    </style>
+}
+

@@ -20,7 +20,11 @@ namespace PGSA_Licence3.Models
 
         [Required]
         [MaxLength(50)]
-        public required string Filiere { get; set; }    
+        public required string Filiere { get; set; }
+        
+        [Required]
+        [MaxLength(20)]
+        public required string Niveau { get; set; }    
         
         [Required]
         [MaxLength(20)]

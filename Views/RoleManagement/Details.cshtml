@@ -1,0 +1,175 @@
+@model PGSA_Licence3.Models.Role
+@{
+    ViewData["Title"] = $"Détails du rôle {Model.Nom}";
+    ViewData["Breadcrumb"] = new List<(string Text, string Url)>
+    {
+        ("Gestion des Rôles", "/RoleManagement"),
+        (Model.Nom, $"/RoleManagement/Details/{Model.Id}")
+    };
+    Layout = "_DashboardLayout";
+}
+
+<div class="container-fluid mt-4 fade-in">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header avec actions -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                            <i class="bi bi-shield-check fs-4"></i>
+                        </div>
+                        <div>
+                            <h2 class="h4 mb-0 text-gray-800">@Model.Nom</h2>
+                            <p class="text-muted mb-0 mt-1">@(Model.Description ?? "Aucune description")</p>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <a href="@Url.Action("ManagePermissions", "RolePermission", new { id = Model.Id })" class="btn btn-warning btn-sm">
+                            <i class="bi bi-key me-1"></i>Gérer les permissions
+                        </a>
+                        <a href="@Url.Action("Edit", "RoleManagement", new { id = Model.Id })" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-pencil me-1"></i>Modifier
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistiques -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <div class="card shadow-sm border-0 text-center">
+                        <div class="card-body py-3">
+                            <div class="text-info mb-2">
+                                <i class="bi bi-key display-6"></i>
+                            </div>
+                            <h4 class="h6 mb-1">Permissions</h4>
+                            <span class="h3 text-info">@(Model.Permissions?.Count ?? 0)</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card shadow-sm border-0 text-center">
+                        <div class="card-body py-3">
+                            <div class="text-primary mb-2">
+                                <i class="bi bi-people display-6"></i>
+                            </div>
+                            <h4 class="h6 mb-1">Utilisateurs</h4>
+                            <span class="h3 text-primary">@(Model.Users?.Count ?? 0)</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card shadow-sm border-0 text-center">
+                        <div class="card-body py-3">
+                            <div class="text-success mb-2">
+                                <i class="bi bi-calendar display-6"></i>
+                            </div>
+                            <h4 class="h6 mb-1">Créé le</h4>
+                            <span class="h5 text-success">@Model.CreatedAt.ToString("dd/MM/yyyy")</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Permissions -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white py-3 border-0">
+                    <h5 class="mb-0">Permissions assignées</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.Permissions == null || !Model.Permissions.Any())
+                    {
+                        <div class="text-center py-3">
+                            <p class="text-muted">Aucune permission assignée à ce rôle.</p>
+                            <a href="@Url.Action("ManagePermissions", "RolePermission", new { id = Model.Id })" class="btn btn-sm btn-primary">
+                                <i class="bi bi-plus-circle me-1"></i>Assigner des permissions
+                            </a>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="row g-2">
+                            @foreach (var permission in Model.Permissions)
+                            {
+                                <div class="col-md-4">
+                                    <div class="border rounded p-2">
+                                        <strong>@permission.Nom</strong>
+                                        @if (!string.IsNullOrEmpty(permission.Description))
+                                        {
+                                            <br><small class="text-muted">@permission.Description</small>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Utilisateurs -->
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3 border-0">
+                    <h5 class="mb-0">Utilisateurs avec ce rôle</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.Users == null || !Model.Users.Any())
+                    {
+                        <div class="text-center py-3">
+                            <p class="text-muted">Aucun utilisateur n'a ce rôle.</p>
+                            <a href="@Url.Action("AssignRole", "UserRole")" class="btn btn-sm btn-primary">
+                                <i class="bi bi-plus-circle me-1"></i>Assigner le rôle
+                            </a>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Nom d'utilisateur</th>
+                                        <th>Email</th>
+                                        <th>Statut</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var user in Model.Users)
+                                    {
+                                        <tr>
+                                            <td>#@user.Id</td>
+                                            <td><strong>@user.Username</strong></td>
+                                            <td>@user.Email</td>
+                                            <td>
+                                                @if (user.Active)
+                                                {
+                                                    <span class="badge bg-success">Actif</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-danger">Inactif</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <style>
+        .table-hover tbody tr:hover {
+            background-color: rgba(44, 123, 229, 0.05);
+        }
+    </style>
+}
+
+

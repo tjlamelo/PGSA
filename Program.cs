@@ -22,11 +22,35 @@ builder.Services.AddScoped<ImportStudentsToGroupeService>();
 builder.Services.AddScoped<SaveImportedStudentsService>();
 builder.Services.AddScoped<StudentImportService>();
 
+// 🔹 Enregistrer les services de gestion des rôles
+builder.Services.AddScoped<PGSA_Licence3.Services.Role_Managment.RoleService>();
+builder.Services.AddScoped<PGSA_Licence3.Services.Role_Managment.PermissionService>();
+builder.Services.AddScoped<PGSA_Licence3.Services.Role_Managment.UserRoleService>();
+builder.Services.AddScoped<PGSA_Licence3.Services.Role_Managment.PermissionSeedService>();
+
+// 🔹 Enregistrer les services de statistiques et rapports
+builder.Services.AddScoped<PGSA_Licence3.Services.Statistics.StatisticsService>();
+
 // 🔹 Ajouter les controllers avec Razor Runtime Compilation
 builder.Services.AddControllersWithViews()
        .AddRazorRuntimeCompilation();
 
 var app = builder.Build();
+
+// 🔹 Initialiser les permissions de base au démarrage
+using (var scope = app.Services.CreateScope())
+{
+    var permissionSeedService = scope.ServiceProvider.GetRequiredService<PGSA_Licence3.Services.Role_Managment.PermissionSeedService>();
+    try
+    {
+        permissionSeedService.SeedPermissionsAsync().GetAwaiter().GetResult();
+    }
+    catch (Exception ex)
+    {
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Une erreur s'est produite lors de l'initialisation des permissions.");
+    }
+}
 
 // Configure the HTTP request pipeline
 if (!app.Environment.IsDevelopment())

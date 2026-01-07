@@ -1,0 +1,137 @@
+@{
+    var user = ViewBag.User as PGSA_Licence3.Models.User;
+    var allRoles = ViewBag.AllRoles as List<PGSA_Licence3.Models.Role>;
+    var userRoleIds = ViewBag.UserRoleIds as List<int> ?? new List<int>();
+    
+    ViewData["Title"] = $"Rôles de {user?.Username}";
+    ViewData["Breadcrumb"] = new List<(string Text, string Url)>
+    {
+        ("Gestion des Rôles", "/RoleManagement"),
+        ("Assigner des Rôles", "/UserRole/AssignRole"),
+        (user?.Username ?? "Utilisateur", $"/UserRole/UserRoles/{user?.Id}")
+    };
+    Layout = "_DashboardLayout";
+}
+
+<div class="container-fluid mt-4 fade-in">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white py-3 border-0">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <div class="bg-info text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                                <i class="bi bi-person-badge fs-4"></i>
+                            </div>
+                            <div>
+                                <h2 class="h4 mb-0 text-gray-800">Rôles de l'utilisateur</h2>
+                                <p class="text-muted mb-0 mt-1">Utilisateur: <strong>@user?.Username</strong> (@user?.Email)</p>
+                            </div>
+                        </div>
+                        <a href="@Url.Action("AssignRole", "UserRole")" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-arrow-left me-1"></i>Retour
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rôles actuels -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white py-3 border-0">
+                    <h5 class="mb-0">Rôles assignés</h5>
+                </div>
+                <div class="card-body">
+                    @if (user?.Roles == null || !user.Roles.Any())
+                    {
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Cet utilisateur n'a aucun rôle assigné.
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Nom du rôle</th>
+                                        <th>Description</th>
+                                        <th>Permissions</th>
+                                        <th class="text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var role in user.Roles)
+                                    {
+                                        <tr>
+                                            <td>#@role.Id</td>
+                                            <td><strong>@role.Nom</strong></td>
+                                            <td>@(role.Description ?? "-")</td>
+                                            <td>
+                                                <span class="badge bg-info">@(role.Permissions?.Count ?? 0) permission(s)</span>
+                                            </td>
+                                            <td class="text-end">
+                                                <form method="post" action="@Url.Action("RemoveRole", "UserRole")" style="display: inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir retirer ce rôle ?');">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="userId" value="@user.Id" />
+                                                    <input type="hidden" name="roleId" value="@role.Id" />
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                        <i class="bi bi-x-circle"></i> Retirer
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Assigner un nouveau rôle -->
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3 border-0">
+                    <h5 class="mb-0">Assigner un nouveau rôle</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="@Url.Action("AssignRole", "UserRole")">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="userId" value="@user?.Id" />
+                        <div class="row g-3">
+                            <div class="col-md-10">
+                                <label for="roleId" class="form-label fw-bold">Sélectionner un rôle</label>
+                                <select class="form-select" id="roleId" name="roleId" required>
+                                    <option value="">Sélectionner un rôle...</option>
+                                    @if (allRoles != null)
+                                    {
+                                        @foreach (var role in allRoles.Where(r => !userRoleIds.Contains(r.Id)))
+                                        {
+                                            <option value="@role.Id">@role.Nom - @(role.Description ?? "Aucune description")</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="bi bi-plus-circle me-1"></i>Assigner
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <style>
+        .table-hover tbody tr:hover {
+            background-color: rgba(44, 123, 229, 0.05);
+        }
+    </style>
+}
+
+

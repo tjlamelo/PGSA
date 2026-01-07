@@ -1,0 +1,117 @@
+@{
+    var role = ViewBag.Role as PGSA_Licence3.Models.Role;
+    var allPermissions = ViewBag.AllPermissions as List<PGSA_Licence3.Models.Permission>;
+    var rolePermissionIds = ViewBag.RolePermissionIds as List<int> ?? new List<int>();
+    
+    ViewData["Title"] = $"Gérer les permissions - {role?.Nom}";
+    ViewData["Breadcrumb"] = new List<(string Text, string Url)>
+    {
+        ("Gestion des Rôles", "/RoleManagement"),
+        (role?.Nom ?? "Rôle", $"/RoleManagement/Details/{role?.Id}"),
+        ("Gérer les permissions", $"/RolePermission/ManagePermissions/{role?.Id}")
+    };
+    Layout = "_DashboardLayout";
+}
+
+<div class="container-fluid mt-4 fade-in">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white py-3 border-0">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                            <i class="bi bi-key fs-4"></i>
+                        </div>
+                        <div>
+                            <h2 class="h4 mb-0 text-gray-800">Gérer les permissions</h2>
+                            <p class="text-muted mb-0 mt-1">Rôle: <strong>@role?.Nom</strong></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="bi bi-check-circle me-2"></i>@TempData["SuccessMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-circle me-2"></i>@TempData["ErrorMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            <form method="post" id="permissionsForm">
+                @Html.AntiForgeryToken()
+                
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-white py-3 border-0">
+                        <h5 class="mb-0">Sélectionner les permissions</h5>
+                    </div>
+                    <div class="card-body">
+                        @if (allPermissions == null || !allPermissions.Any())
+                        {
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                Aucune permission disponible. Créez d'abord des permissions de base.
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="row g-3">
+                                @foreach (var permission in allPermissions)
+                                {
+                                    <div class="col-md-6 col-lg-4">
+                                        <div class="form-check border rounded p-3 h-100" style="cursor: pointer;" onclick="document.getElementById('perm_@permission.Id').click()">
+                                            <input class="form-check-input" type="checkbox" name="selectedPermissions" value="@permission.Id" id="perm_@permission.Id" 
+                                                   @(rolePermissionIds.Contains(permission.Id) ? "checked" : "")>
+                                            <label class="form-check-label w-100" for="perm_@permission.Id" style="cursor: pointer;">
+                                                <strong>@permission.Nom</strong>
+                                                @if (!string.IsNullOrEmpty(permission.Description))
+                                                {
+                                                    <br><small class="text-muted">@permission.Description</small>
+                                                }
+                                            </label>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a href="@Url.Action("Details", "RoleManagement", new { id = role?.Id })" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i>Retour
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-1"></i>Enregistrer les permissions
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <style>
+        .form-check {
+            transition: all 0.3s ease;
+        }
+        .form-check:hover {
+            background-color: rgba(44, 123, 229, 0.05);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .form-check-input:checked {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+    </style>
+}
+
+

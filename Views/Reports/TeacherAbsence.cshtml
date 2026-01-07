@@ -1,0 +1,154 @@
+@model PGSA_Licence3.Services.Statistics.TeacherAbsenceStatisticsDto
+@{
+    var dateDebut = ViewBag.DateDebut as DateTime?;
+    var dateFin = ViewBag.DateFin as DateTime?;
+    ViewData["Title"] = "Statistiques absences enseignants";
+    ViewData["Breadcrumb"] = new List<(string Text, string Url)>
+    {
+        ("Statistiques et Rapports", "/Reports"),
+        ("Absences enseignants", "/Reports/TeacherAbsence")
+    };
+    Layout = "_DashboardLayout";
+}
+
+<div class="container-fluid mt-4 fade-in">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                            <i class="bi bi-person-x fs-4"></i>
+                        </div>
+                        <div>
+                            <h2 class="h4 mb-0 text-gray-800">@ViewData["Title"]</h2>
+                            <p class="text-muted mb-0 mt-1">Statistiques sur les signalements d'absence des enseignants</p>
+                        </div>
+                    </div>
+                    <a href="@Url.Action("Index", "Reports")" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-left me-1"></i>Retour
+                    </a>
+                </div>
+            </div>
+
+            <!-- Filtres -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="dateDebut" class="form-label">Date de début</label>
+                            <input type="date" class="form-control" id="dateDebut" name="dateDebut" value="@(dateDebut?.ToString("yyyy-MM-dd") ?? "")">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="dateFin" class="form-label">Date de fin</label>
+                            <input type="date" class="form-control" id="dateFin" name="dateFin" value="@(dateFin?.ToString("yyyy-MM-dd") ?? "")">
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-funnel me-1"></i>Filtrer
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Statistiques principales -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <div class="card shadow-sm border-0 text-center">
+                        <div class="card-body py-3">
+                            <div class="text-primary mb-2">
+                                <i class="bi bi-bell display-6"></i>
+                            </div>
+                            <h4 class="h6 mb-1">Total Signalements</h4>
+                            <span class="h3 text-primary">@Model.TotalSignalements</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card shadow-sm border-0 text-center">
+                        <div class="card-body py-3">
+                            <div class="text-warning mb-2">
+                                <i class="bi bi-clock-history display-6"></i>
+                            </div>
+                            <h4 class="h6 mb-1">En Attente</h4>
+                            <span class="h3 text-warning">@Model.SignalementsEnAttente</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card shadow-sm border-0 text-center">
+                        <div class="card-body py-3">
+                            <div class="text-success mb-2">
+                                <i class="bi bi-check-circle display-6"></i>
+                            </div>
+                            <h4 class="h6 mb-1">Traités</h4>
+                            <span class="h3 text-success">@Model.SignalementsTraites</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card shadow-sm border-0 text-center">
+                        <div class="card-body py-3">
+                            <div class="text-danger mb-2">
+                                <i class="bi bi-x-circle display-6"></i>
+                            </div>
+                            <h4 class="h6 mb-1">Rejetés</h4>
+                            <span class="h3 text-danger">@Model.SignalementsRejetes</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Signalements par cours -->
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3 border-0">
+                    <h5 class="mb-0">Signalements par cours</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.SignalementsParCours == null || !Model.SignalementsParCours.Any())
+                    {
+                        <div class="text-center py-5">
+                            <i class="bi bi-book display-4 text-muted mb-3"></i>
+                            <p class="text-muted">Aucun signalement pour cette période.</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Cours</th>
+                                        <th>Code</th>
+                                        <th>Nombre de Signalements</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model.SignalementsParCours)
+                                    {
+                                        <tr>
+                                            <td><strong>@item.CoursNom</strong></td>
+                                            <td>@item.CoursCode</td>
+                                            <td><span class="badge bg-primary">@item.NombreSignalements</span></td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <style>
+        .table-hover tbody tr:hover {
+            background-color: rgba(44, 123, 229, 0.05);
+        }
+    </style>
+}
+

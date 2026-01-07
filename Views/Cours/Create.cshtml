@@ -1,0 +1,155 @@
+@{
+    ViewData["Title"] = "Créer un cours";
+    Layout = "_DashboardLayout";
+}
+
+<div class="container-fluid mt-4 fade-in">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3 border-0">
+                    <h4 class="mb-0">
+                        <i class="bi bi-plus-circle me-2 text-primary"></i>Créer un nouveau cours
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="createForm">
+                        @Html.AntiForgeryToken()
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="nom" class="form-label fw-bold">Nom du cours <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="nom" name="nom" required placeholder="Ex: Génie Logiciel">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="code" class="form-label fw-bold">Code du cours <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="code" name="code" required placeholder="Ex: GL">
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="niveau" class="form-label fw-bold">Niveau <span class="text-danger">*</span></label>
+                                <select class="form-select" id="niveau" name="niveau" required>
+                                    <option value="">Sélectionner...</option>
+                                    <option value="L1">L1</option>
+                                    <option value="L2">L2</option>
+                                    <option value="L3">L3</option>
+                                    <option value="M1">M1</option>
+                                    <option value="M2">M2</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="filiere" class="form-label fw-bold">Filière <span class="text-danger">*</span></label>
+                                <select class="form-select" id="filiere" name="filiere" required>
+                                    <option value="">Sélectionner...</option>
+                                    <option value="Info">Informatique</option>
+                                    <option value="Math">Mathématiques</option>
+                                    <option value="Phys">Physique</option>
+                                    <option value="Chim">Chimie</option>
+                                    <option value="Bio">Biologie</option>
+                                    <option value="Lettres">Lettres</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="semestre" class="form-label fw-bold">Semestre <span class="text-danger">*</span></label>
+                                <select class="form-select" id="semestre" name="semestre" required>
+                                    <option value="">Sélectionner...</option>
+                                    <option value="S1">S1</option>
+                                    <option value="S2">S2</option>
+                                    <option value="S3">S3</option>
+                                    <option value="S4">S4</option>
+                                    <option value="S5">S5</option>
+                                    <option value="S6">S6</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="anneeAcademique" class="form-label fw-bold">Année académique <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="anneeAcademique" name="anneeAcademique" required min="2020" max="2030" value="@DateTime.Now.Year">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="enseignantId" class="form-label fw-bold">Enseignant <span class="text-danger">*</span></label>
+                                <select class="form-select" id="enseignantId" name="enseignantId" required>
+                                    <option value="">Sélectionner...</option>
+                                    @foreach (var enseignant in ViewBag.Enseignants)
+                                    {
+                                        <option value="@enseignant.Id">@enseignant.Nom @enseignant.Prenom</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-check-circle me-1"></i>Créer le cours
+                                    </button>
+                                    <a href="@Url.Action("Index")" class="btn btn-secondary">
+                                        <i class="bi bi-arrow-left me-1"></i>Retour
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Charger les matières par défaut selon le niveau sélectionné
+        document.getElementById('niveau').addEventListener('change', function() {
+            const niveau = this.value;
+            if (niveau) {
+                loadDefaultMatieres(niveau);
+            }
+        });
+
+        async function loadDefaultMatieres(niveau) {
+            try {
+                const response = await fetch(`/Courses/GetDefaultMatieres?niveau=${niveau}`);
+                const matieres = await response.json();
+                
+                // Suggérer les matières dans le champ nom
+                const nomInput = document.getElementById('nom');
+                const codeInput = document.getElementById('code');
+                
+                if (matieres.length > 0) {
+                    // Créer un datalist pour les suggestions
+                    let datalist = document.getElementById('matieresList');
+                    if (!datalist) {
+                        datalist = document.createElement('datalist');
+                        datalist.id = 'matieresList';
+                        nomInput.setAttribute('list', 'matieresList');
+                        nomInput.parentElement.appendChild(datalist);
+                    }
+                    
+                    datalist.innerHTML = '';
+                    matieres.forEach(matiere => {
+                        const option = document.createElement('option');
+                        option.value = matiere.nom;
+                        option.setAttribute('data-code', matiere.code);
+                        datalist.appendChild(option);
+                    });
+                    
+                    // Mettre à jour le code quand on sélectionne une matière
+                    nomInput.addEventListener('change', function() {
+                        const selectedOption = Array.from(datalist.options).find(opt => opt.value === this.value);
+                        if (selectedOption) {
+                            codeInput.value = selectedOption.getAttribute('data-code');
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Erreur lors du chargement des matières:', error);
+            }
+        }
+    </script>
+}
+

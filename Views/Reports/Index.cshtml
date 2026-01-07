@@ -1,0 +1,144 @@
+@{
+    ViewData["Title"] = "Statistiques et Rapports";
+    ViewData["Breadcrumb"] = new List<(string Text, string Url)>
+    {
+        ("Statistiques et Rapports", "/Reports")
+    };
+    Layout = "_DashboardLayout";
+}
+
+<div class="container-fluid mt-4 fade-in">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white py-3 border-0">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                            <i class="bi bi-graph-up fs-4"></i>
+                        </div>
+                        <div>
+                            <h2 class="h4 mb-0 text-gray-800">@ViewData["Title"]</h2>
+                            <p class="text-muted mb-0 mt-1">Consultez les statistiques et générez des rapports détaillés</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cartes de navigation -->
+            <div class="row g-3">
+                <!-- Rapport individuel étudiant -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="card shadow-sm border-0 h-100 hover-lift">
+                        <div class="card-body text-center p-4">
+                            <div class="bg-info text-white rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 60px; height: 60px;">
+                                <i class="bi bi-person-check fs-2"></i>
+                            </div>
+                            <h5 class="card-title mb-3">Rapport Individuel</h5>
+                            <p class="text-muted mb-4">Statistiques détaillées d'un étudiant (heures d'absence, taux d'assiduité, détail par cours)</p>
+                            <a href="@Url.Action("Student", "Reports")" class="btn btn-info btn-sm">
+                                <i class="bi bi-arrow-right me-1"></i>Consulter
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rapport par cours -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="card shadow-sm border-0 h-100 hover-lift">
+                        <div class="card-body text-center p-4">
+                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 60px; height: 60px;">
+                                <i class="bi bi-book fs-2"></i>
+                            </div>
+                            <h5 class="card-title mb-3">Rapport par Cours</h5>
+                            <p class="text-muted mb-4">Taux d'absentéisme par cours avec statistiques détaillées</p>
+                            <a href="@Url.Action("Course", "Reports")" class="btn btn-primary btn-sm">
+                                <i class="bi bi-arrow-right me-1"></i>Consulter
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rapport par groupe -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="card shadow-sm border-0 h-100 hover-lift">
+                        <div class="card-body text-center p-4">
+                            <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 60px; height: 60px;">
+                                <i class="bi bi-collection fs-2"></i>
+                            </div>
+                            <h5 class="card-title mb-3">Rapport par Groupe</h5>
+                            <p class="text-muted mb-4">Taux d'absentéisme par groupe avec analyse détaillée</p>
+                            <a href="@Url.Action("Group", "Reports")" class="btn btn-success btn-sm">
+                                <i class="bi bi-arrow-right me-1"></i>Consulter
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rapport par promotion -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="card shadow-sm border-0 h-100 hover-lift">
+                        <div class="card-body text-center p-4">
+                            <div class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 60px; height: 60px;">
+                                <i class="bi bi-people fs-2"></i>
+                            </div>
+                            <h5 class="card-title mb-3">Rapport par Promotion</h5>
+                            <p class="text-muted mb-4">Taux d'absentéisme par promotion (niveau et filière)</p>
+                            <a href="@Url.Action("Promotion", "Reports")" class="btn btn-warning btn-sm">
+                                <i class="bi bi-arrow-right me-1"></i>Consulter
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Étudiants critiques -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="card shadow-sm border-0 h-100 hover-lift">
+                        <div class="card-body text-center p-4">
+                            <div class="bg-danger text-white rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 60px; height: 60px;">
+                                <i class="bi bi-exclamation-triangle fs-2"></i>
+                            </div>
+                            <h5 class="card-title mb-3">Étudiants Critiques</h5>
+                            <p class="text-muted mb-4">Liste des étudiants en situation critique (taux d'assiduité faible)</p>
+                            <a href="@Url.Action("Critical", "Reports")" class="btn btn-danger btn-sm">
+                                <i class="bi bi-arrow-right me-1"></i>Consulter
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Absences enseignants -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="card shadow-sm border-0 h-100 hover-lift">
+                        <div class="card-body text-center p-4">
+                            <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 60px; height: 60px;">
+                                <i class="bi bi-person-x fs-2"></i>
+                            </div>
+                            <h5 class="card-title mb-3">Absences Enseignants</h5>
+                            <p class="text-muted mb-4">Statistiques sur les signalements d'absence des enseignants</p>
+                            <a href="@Url.Action("TeacherAbsence", "Reports")" class="btn btn-secondary btn-sm">
+                                <i class="bi bi-arrow-right me-1"></i>Consulter
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <style>
+        .hover-lift {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .hover-lift:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+        }
+        .card {
+            border-radius: 0.75rem;
+        }
+    </style>
+}
+
