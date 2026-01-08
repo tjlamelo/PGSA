@@ -12,12 +12,12 @@ namespace PGSA_Licence3.Models.Seeders
             {
                 var specialites = new List<Specialite>
                 {
-                    new Specialite { NomSpecialite = "Conception et développement d'applications pour l'économie numérique" },
-                    new Specialite { NomSpecialite = "Informatique et Systèmes d'Information" },
-                    new Specialite { NomSpecialite = "Systèmes et Réseaux de Télécommunications" },
-                    new Specialite { NomSpecialite = "Génie Civil" },
-                    new Specialite { NomSpecialite = "Génie Électrique" },
-                    new Specialite { NomSpecialite = "Génie Mécanique" },
+                    new Specialite { NomSpecialite = "Conception et développement d'applications pour l'économie numérique" }, // unique specialité licence
+                    new Specialite { NomSpecialite = "Informatique et Systèmes d'Information" }, // unique specialité master
+                    new Specialite { NomSpecialite = "Systèmes et Réseaux de Télécommunications" }, //   specialité ingenieur
+                    new Specialite { NomSpecialite = "Génie Civil" }, //   specialité ingenieur
+                    new Specialite { NomSpecialite = "Génie Électrique" }, //   specialité ingenieur
+                    new Specialite { NomSpecialite = "Génie Mécanique" }, //   specialité ingenieur
 
                 };
 

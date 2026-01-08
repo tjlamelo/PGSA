@@ -412,5 +412,6 @@ public async Task<List<UserViewModel>> GetAllUsersAsync()
             // Utiliser PasswordHelper pour la vérification
             return PasswordHelper.VerifyPassword(password, user.MotDePasseHash) ? user : null;
         }
+        
     }
 }

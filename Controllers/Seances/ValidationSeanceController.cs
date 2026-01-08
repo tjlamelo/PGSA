@@ -10,6 +10,7 @@ namespace PGSA_Licence3.Controllers.Seances
 {
     [Route("ValidationSeance")]
     [Authorize]
+    
     public class ValidationSeanceController : Controller
     {
         private readonly ValidationSeanceService _validationSeanceService;
@@ -23,12 +24,62 @@ namespace PGSA_Licence3.Controllers.Seances
             _validationSeanceService = new ValidationSeanceService(db);
         }
 
+        // Méthode pour obtenir l'ID de l'utilisateur connecté
+        private int GetCurrentUserId()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userId))
+            {
+                return userId;
+            }
+            
+            return 0;
+        }
+
+        // MODIFICATION: Utilisation des rôles directement depuis les claims
+        private bool HasRole(string roleName)
+        {
+            return User.HasClaim(ClaimTypes.Role, roleName);
+        }
+
         [HttpGet("")]
         public async Task<IActionResult> Index()
         {
             try
             {
-                var seances = await _validationSeanceService.GetSeancesEligiblesAValidationAsync();
+                var userId = GetCurrentUserId();
+                if (userId == 0)
+                {
+                    TempData["Error"] = "Vous devez être connecté pour accéder à cette page";
+                    return RedirectToAction("Login", "Auth");
+                }
+
+                // MODIFICATION: Utilisation directe des rôles
+                var isEnseignant = HasRole("Enseignant");
+                var isDelegue = HasRole("Délégué");
+                
+                List<Seance> seances;
+                
+                if (isEnseignant)
+                {
+                    // Si l'utilisateur est un enseignant, récupérer uniquement ses séances
+                    seances = await _validationSeanceService.GetSeancesEligiblesAValidationByEnseignantAsync(userId);
+                }
+                else if (isDelegue)
+                {
+                    // Si l'utilisateur est un délégué, récupérer les séances de sa classe
+                    seances = await _validationSeanceService.GetSeancesEligiblesAValidationByDelegueAsync(userId);
+                }
+                else
+                {
+                    // Sinon, retourner une liste vide (l'utilisateur n'a pas les droits)
+                    seances = new List<Seance>();
+                    TempData["Error"] = "Vous n'avez pas les droits pour accéder à cette page";
+                }
+                
+                ViewBag.IsEnseignant = isEnseignant;
+                ViewBag.IsDelegue = isDelegue;
+
                 return View("~/Views/User/Staff/ValidationSeance.cshtml", seances);
             }
             catch (Exception ex)
@@ -62,25 +113,45 @@ namespace PGSA_Licence3.Controllers.Seances
                     return Json(new { success = false, message = "ID de séance invalide." });
                 }
 
-                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int validateurId))
+                var userId = GetCurrentUserId();
+                if (userId == 0)
                 {
                     _logger.LogWarning("Utilisateur non identifié");
                     return Json(new { success = false, message = "Utilisateur non identifié." });
                 }
 
+                // MODIFICATION: Utilisation directe des rôles
+                var isEnseignant = HasRole("Enseignant");
+                var isDelegue = HasRole("Délégué");
+
                 TypeValidation typeValidation;
-                if (User.IsInRole("Enseignant"))
+                if (isEnseignant)
                 {
                     typeValidation = TypeValidation.Enseignant;
+                    
+                    // Vérifier si l'enseignant est autorisé à valider cette séance
+                    var isAuthorized = await _validationSeanceService.IsEnseignantAuthorizedForSeanceAsync(userId, model.SeanceId);
+                    if (!isAuthorized)
+                    {
+                        _logger.LogWarning("L'enseignant {UserId} n'est pas autorisé à valider la séance {SeanceId}", userId, model.SeanceId);
+                        return Json(new { success = false, message = "Vous n'êtes pas autorisé à valider cette séance." });
+                    }
                 }
-                else if (User.IsInRole("Délégué"))
+                else if (isDelegue)
                 {
                     typeValidation = TypeValidation.Delegue;
+                    
+                    // Vérifier si le délégué est autorisé à valider cette séance
+                    var isAuthorized = await _validationSeanceService.IsDelegueAuthorizedForSeanceAsync(userId, model.SeanceId);
+                    if (!isAuthorized)
+                    {
+                        _logger.LogWarning("Le délégué {UserId} n'est pas autorisé à valider la séance {SeanceId}", userId, model.SeanceId);
+                        return Json(new { success = false, message = "Vous n'êtes pas autorisé à valider cette séance." });
+                    }
                 }
                 else
                 {
-                    _logger.LogWarning("Permissions insuffisantes pour l'utilisateur {UserId}", validateurId);
+                    _logger.LogWarning("Permissions insuffisantes pour l'utilisateur {UserId}", userId);
                     return Json(new { success = false, message = "Permissions insuffisantes pour valider." });
                 }
 
@@ -103,15 +174,15 @@ namespace PGSA_Licence3.Controllers.Seances
                 }
 
                 // Vérification que l'utilisateur n'a pas déjà validé cette séance
-                if (seance.Validations != null && seance.Validations.Any(v => v.ValidateurId == validateurId && v.TypeValidation == typeValidation))
+                if (seance.Validations != null && seance.Validations.Any(v => v.ValidateurId == userId && v.TypeValidation == typeValidation))
                 {
-                    _logger.LogWarning("L'utilisateur {UserId} a déjà validé la séance {SeanceId}", validateurId, model.SeanceId);
+                    _logger.LogWarning("L'utilisateur {UserId} a déjà validé la séance {SeanceId}", userId, model.SeanceId);
                     return Json(new { success = false, message = "Vous avez déjà validé cette séance." });
                 }
 
                 var validation = await _validationSeanceService.CreateOrUpdateValidationAsync(
                     model.SeanceId,
-                    validateurId,
+                    userId,
                     typeValidation,
                     model.Statut,
                     model.Commentaire
@@ -124,7 +195,7 @@ namespace PGSA_Licence3.Controllers.Seances
                     success = true, 
                     message = $"Validation enregistrée par {validateurName}.",
                     statut = validation.Statut.ToString(),
-                    statutValue = (int)validation.Statut, // Ajout de la valeur numérique
+                    statutValue = (int)validation.Statut,
                     dateValidation = validation.DateValidation.ToString("dd/MM/yyyy HH:mm")
                 });
             }

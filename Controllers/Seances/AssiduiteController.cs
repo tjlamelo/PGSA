@@ -10,20 +10,75 @@ namespace PGSA_Licence3.Controllers.Seances
     public class AssiduiteController : Controller
     {
         private readonly AssiduiteService _assiduiteService;
+        private readonly SeanceService _seanceService;
 
         public AssiduiteController(ApplicationDbContext db)
         {
             _assiduiteService = new AssiduiteService(db);
+            _seanceService = new SeanceService(db);
+        }
+
+        // Méthode pour obtenir l'ID de l'utilisateur connecté
+        private int GetCurrentUserId()
+        {
+            // Vous pouvez adapter cette méthode selon votre système d'authentification
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userId))
+            {
+                return userId;
+            }
+            
+            // Alternative avec la session
+            if (HttpContext.Session.GetInt32("UserId").HasValue)
+            {
+                return HttpContext.Session.GetInt32("UserId").Value;
+            }
+            
+            // Valeur par défaut si non connecté
+            return 0;
+        }
+
+        // Méthode pour vérifier si l'utilisateur est un enseignant
+        private async Task<bool> IsEnseignant()
+        {
+            var userId = GetCurrentUserId();
+            if (userId == 0) return false;
+            
+            return await _seanceService.IsEnseignantAsync(userId);
+        }
+
+        // Méthode pour vérifier si l'utilisateur est un étudiant délégué
+        private async Task<bool> IsDelegue()
+        {
+            var userId = GetCurrentUserId();
+            if (userId == 0) return false;
+            
+            return await _seanceService.IsDelegueAsync(userId);
         }
 
         // Afficher la page de prise d'appel pour une séance
         [HttpGet("PriseAppel/{seanceId}")]
         public async Task<IActionResult> PriseAppel(int seanceId)
         {
+            var userId = GetCurrentUserId();
+            if (userId == 0)
+            {
+                TempData["Error"] = "Vous devez être connecté pour accéder à cette page";
+                return RedirectToAction("Login", "Auth");
+            }
+
             var seance = await _assiduiteService.GetSeanceByIdAsync(seanceId);
             if (seance == null)
             {
                 TempData["Error"] = "Séance non trouvée";
+                return RedirectToAction("Index", "Seance");
+            }
+
+            // Vérifier si l'utilisateur est autorisé à accéder à cette séance
+            var isAuthorized = await _assiduiteService.IsUserAuthorizedForSeanceAsync(userId, seanceId);
+            if (!isAuthorized)
+            {
+                TempData["Error"] = "Vous n'êtes pas autorisé à accéder à cette séance";
                 return RedirectToAction("Index", "Seance");
             }
 
@@ -52,13 +107,22 @@ namespace PGSA_Licence3.Controllers.Seances
             try
             {
                 // Récupérer l'ID de l'utilisateur connecté
-                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int enregistreurId))
+                var userId = GetCurrentUserId();
+                if (userId == 0)
                 {
-                    // return RedirectToAction("Login", "Auth");
+                    TempData["Error"] = "Vous devez être connecté pour effectuer cette action";
+                    return RedirectToAction("Login", "Auth");
                 }
 
-                await _assiduiteService.SaveAppelAsync(seanceId, presences, heuresEffectuees, commentaires, 16);
+                // Vérifier si l'utilisateur est autorisé à accéder à cette séance
+                var isAuthorized = await _assiduiteService.IsUserAuthorizedForSeanceAsync(userId, seanceId);
+                if (!isAuthorized)
+                {
+                    TempData["Error"] = "Vous n'êtes pas autorisé à accéder à cette séance";
+                    return RedirectToAction("PriseAppel", new { seanceId });
+                }
+
+                await _assiduiteService.SaveAppelAsync(seanceId, presences, heuresEffectuees, commentaires, userId);
                 TempData["Success"] = "L'appel a été enregistré avec succès";
             }
             catch (Exception ex)

@@ -148,7 +148,8 @@
                   src="https://picsum.photos/seed/admin/100/100.jpg"
                   alt="Admin"
                 />
-                <span>Admin</span>
+      <span>@User.Identity?.Name</span>
+
               </div>
             </a>
             <ul
@@ -173,89 +174,108 @@
     </nav>
 
     <!-- SIDEBAR -->
-    <div class="sidebar" id="sidebar">
-      <div class="sidebar-header">
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
         <h5>
-          <i class="bi bi-grid-3x3-gap-fill me-2"></i>
-          MENU PGSA
+            <i class="bi bi-grid-3x3-gap-fill me-2"></i>
+            MENU PGSA
         </h5>
         <button class="sidebar-toggle" id="desktopSidebarToggle">
-          <i class="bi bi-chevron-left"></i>
+            <i class="bi bi-chevron-left"></i>
         </button>
-      </div>
-
-      <ul class="sidebar-menu">
-        <li>
-          <a
-            href="/dashboard/index"
-            data-tooltip="Gestion des utilisateurs"
-          >
-            <i class="bi bi-people"></i>
-            <span class="menu-text">Dashboard</span>
-          </a>
-        </li>
-        <!-- Gestion des utilisateurs -->
-        <li>
-          <a
-            href="/Admin/UserManagement/Account"
-            data-tooltip="Gestion des utilisateurs"
-          >
-            <i class="bi bi-people"></i>
-            <span class="menu-text">Gestion des utilisateurs</span>
-          </a>
-        </li>
-
-        <!-- Import étudiants -->
-        <li>
-          <a href="/Students/Import" data-tooltip="Import des étudiants">
-            <i class="bi bi-upload"></i>
-            <span class="menu-text">Import étudiants</span>
-          </a>
-        </li>
-
-        <!-- Séances -->
-        <li>
-          <a href="/Seance" data-tooltip="Gestion des séances">
-            <i class="bi bi-calendar-plus"></i>
-            <span class="menu-text">Séances</span>
-          </a>
-        </li>
-
-        <!-- Prise d'appel -->
-        <li>
-          <a href="/Assiduite/PriseAppel" data-tooltip="Prise d'appel">
-            <i class="bi bi-check2-square"></i>
-            <span class="menu-text">Prise d'appel</span>
-          </a>
-        </li>
-
-        <!-- Cahier de texte -->
-        <li>
-          <a href="/CahierDeTexte" data-tooltip="Cahier de texte">
-            <i class="bi bi-journal-text"></i>
-            <span class="menu-text">Cahier de texte</span>
-          </a>
-        </li>
-
-        <!-- Signalement absence enseignant -->
-        <li>
-          <a
-            href="/SignalementAbsenceEnseignant"
-            data-tooltip="Signalement des absences enseignants"
-          >
-            <i class="bi bi-exclamation-triangle"></i>
-            <span class="menu-text">Absence enseignant</span>
-          </a>
-        </li>
-
-        <li>
-          <a href="/ValidationSeance" data-tooltip="Validation des séances">
-            <i class="bi bi-clipboard-check"></i>
-            <span class="menu-text">Validation séances</span>
-          </a>
-        </li>
-      </ul>
     </div>
+
+    <ul class="sidebar-menu">
+
+        <!-- Dashboard : visible pour tous les rôles -->
+        <li>
+            <a href="/dashboard/index" data-tooltip="Gestion des utilisateurs">
+                <i class="bi bi-people"></i>
+                <span class="menu-text">Dashboard</span>
+            </a>
+        </li>
+
+        <!-- Justification Absences : seulement Administrateur et Délégué -->
+        @if (User.IsInRole("Administrateur") || User.IsInRole("Délégué") || User.IsInRole("Etudiant"))
+        {
+            <li>
+                <a href="/JustificationAbsences" data-tooltip="Justifications d'absences">
+                    <i class="bi bi-people"></i>
+                    <span class="menu-text">Justification Absences</span>
+                </a>
+            </li>
+        }
+
+        <!-- Gestion utilisateurs : seulement pour Administrateur -->
+        @if (User.IsInRole("Administrateur"))
+        {                  
+            <li>
+                <a href="/Admin/UserManagement/Account" data-tooltip="Gestion des utilisateurs">
+                    <i class="bi bi-people"></i>
+                    <span class="menu-text">Gestion des utilisateurs</span>
+                </a>
+            </li>
+
+            <li>
+                <a href="/Admin/Permissions" data-tooltip="Gestion des permissions">
+                    <i class="bi bi-people"></i>
+                    <span class="menu-text">Gestion des permissions</span>
+                </a>
+            </li>
+
+            <li>
+                <a href="/Students/Import" data-tooltip="Import des étudiants">
+                    <i class="bi bi-upload"></i>
+                    <span class="menu-text">Import étudiants</span>
+                </a>
+            </li>
+        }
+
+        <!-- Séances et Prise d'appel : Administrateur, Enseignant, Délégué -->
+        @if (User.IsInRole("Administrateur") || User.IsInRole("Enseignant") || User.IsInRole("Délégué"))
+        {
+            <li>
+                <a href="/Seance" data-tooltip="Gestion des séances">
+                    <i class="bi bi-calendar-plus"></i>
+                    <span class="menu-text">Séances</span>
+                </a>
+            </li>
+
+            <li>
+                <a href="/Assiduite/PriseAppel" data-tooltip="Prise d'appel">
+                    <i class="bi bi-check2-square"></i>
+                    <span class="menu-text">Prise d'appel</span>
+                </a>
+            </li>
+
+            <li>
+                <a href="/CahierDeTexte" data-tooltip="Cahier de texte">
+                    <i class="bi bi-journal-text"></i>
+                    <span class="menu-text">Cahier de texte</span>
+                </a>
+            </li>
+
+            <li>
+                <a href="/ValidationSeance" data-tooltip="Validation des séances">
+                    <i class="bi bi-clipboard-check"></i>
+                    <span class="menu-text">Validation séances</span>
+                </a>
+            </li>
+        }
+
+        <!-- Absence enseignant : Administrateur et Délégué uniquement -->
+        @if (User.IsInRole("Administrateur") || User.IsInRole("Délégué"))
+        {
+            <li>
+                <a href="/SignalementAbsenceEnseignant" data-tooltip="Signalement des absences enseignants">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <span class="menu-text">Absence enseignant</span>
+                </a>
+            </li>
+        }
+    </ul>
+</div>
+
 
     <!-- CONTENU -->
     <div class="content" id="content">

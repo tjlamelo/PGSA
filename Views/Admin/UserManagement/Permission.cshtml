@@ -1,0 +1,291 @@
+@model PGSA_Licence3.Controllers.Auth.Admin.Account.PermissionManagementViewModel
+@{
+    ViewData["Title"] = "Gestion des Rôles et Permissions";
+    ViewData["Breadcrumb"] = new List<(string Text, string Url)>
+    {
+        ("Administration", "/Admin"),
+        ("Gestion des Rôles et Permissions", "/Admin/Permissions")
+    };
+    Layout = "_DashboardLayout";
+}
+
+<div class="container-fluid mt-4 fade-in">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Gestion des Rôles et Permissions</h2>
+        <div>
+            <a href="@Url.Action("CreateRole")" class="btn btn-primary me-2">
+                <i class="bi bi-shield-plus me-2"></i>Ajouter un rôle
+            </a>
+            <a href="@Url.Action("CreatePermission")" class="btn btn-success">
+                <i class="bi bi-key me-2"></i>Ajouter une permission
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i> @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Onglets pour les différentes sections -->
+    <ul class="nav nav-tabs" id="permissionTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="roles-tab" data-bs-toggle="tab" data-bs-target="#roles-tab-pane" type="button" role="tab" aria-controls="roles-tab-pane" aria-selected="true">
+                <i class="bi bi-shield me-2"></i>Rôles
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="permissions-tab" data-bs-toggle="tab" data-bs-target="#permissions-tab-pane" type="button" role="tab" aria-controls="permissions-tab-pane" aria-selected="false">
+                <i class="bi bi-key me-2"></i>Permissions
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="users-tab" data-bs-toggle="tab" data-bs-target="#users-tab-pane" type="button" role="tab" aria-controls="users-tab-pane" aria-selected="false">
+                <i class="bi bi-people me-2"></i>Utilisateurs
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="permissionTabContent">
+        <!-- Onglet Rôles -->
+        <div class="tab-pane fade show active" id="roles-tab-pane" role="tabpanel" aria-labelledby="roles-tab" tabindex="0">
+            <div class="card shadow-sm mt-3">
+                <div class="card-header bg-white py-3">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h5 class="mb-0">Liste des Rôles</h5>
+                        </div>
+                        <div class="col-auto">
+                            <div class="input-group">
+                                <input type="text" class="form-control search-table" placeholder="Rechercher un rôle..." data-table="rolesTable">
+                                <button class="btn btn-outline-secondary" type="button">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped" id="rolesTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nom</th>
+                                    <th>Description</th>
+                                    <th>Permissions</th>
+                                    <th>Utilisateurs</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.Roles != null)
+                                {
+                                    @foreach (var role in Model.Roles)
+                                    {
+                                        <tr>
+                                            <td>@role.Id</td>
+                                            <td><strong>@role.Nom</strong></td>
+                                            <td>@role.Description</td>
+                                            <td>
+                                                <span class="badge bg-info">
+                                                    @(role.Permissions?.Count ?? 0)
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-primary">
+                                                    @(role.Users?.Count ?? 0)
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <a href="@Url.Action("EditRole", new { id = role.Id })" class="btn btn-sm btn-outline-primary" title="Modifier">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </a>
+                                                    <a href="@Url.Action("RolePermissions", new { id = role.Id })" class="btn btn-sm btn-outline-info" title="Gérer les permissions">
+                                                        <i class="bi bi-key"></i>
+                                                    </a>
+                                                    <form asp-action="DeleteRole" asp-route-id="@role.Id" method="post" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce rôle ?');" style="display:inline;">
+                                                        @Html.AntiForgeryToken()
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Supprimer">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Onglet Permissions -->
+        <div class="tab-pane fade" id="permissions-tab-pane" role="tabpanel" aria-labelledby="permissions-tab" tabindex="0">
+            <div class="card shadow-sm mt-3">
+                <div class="card-header bg-white py-3">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h5 class="mb-0">Liste des Permissions</h5>
+                        </div>
+                        <div class="col-auto">
+                            <div class="input-group">
+                                <input type="text" class="form-control search-table" placeholder="Rechercher une permission..." data-table="permissionsTable">
+                                <button class="btn btn-outline-secondary" type="button">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped" id="permissionsTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nom</th>
+                                    <th>Description</th>
+                                    <th>Roles</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.Permissions != null)
+                                {
+                                    @foreach (var permission in Model.Permissions)
+                                    {
+                                        <tr>
+                                            <td>@permission.Id</td>
+                                            <td><strong>@permission.Nom</strong></td>
+                                            <td>@permission.Description</td>
+                                            <td>
+                                                <span class="badge bg-info">
+                                                    @(permission.Roles?.Count ?? 0)
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <a href="@Url.Action("EditPermission", new { id = permission.Id })" class="btn btn-sm btn-outline-primary" title="Modifier">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </a>
+                                                    <form asp-action="DeletePermission" asp-route-id="@permission.Id" method="post" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette permission ?');" style="display:inline;">
+                                                        @Html.AntiForgeryToken()
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Supprimer">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Onglet Utilisateurs -->
+        <div class="tab-pane fade" id="users-tab-pane" role="tabpanel" aria-labelledby="users-tab" tabindex="0">
+            <div class="card shadow-sm mt-3">
+                <div class="card-header bg-white py-3">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h5 class="mb-0">Gestion des Rôles par Utilisateur</h5>
+                        </div>
+                        <div class="col-auto">
+                            <div class="input-group">
+                                <input type="text" class="form-control search-table" placeholder="Rechercher un utilisateur..." data-table="usersTable">
+                                <button class="btn btn-outline-secondary" type="button">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped" id="usersTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nom</th>
+                                    <th>Email</th>
+                                    <th>Rôles</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.Users != null)
+                                {
+                                    @foreach (var user in Model.Users)
+                                    {
+                                        <tr>
+                                            <td>@user.Id</td>
+                                            <td><strong>@user.Prenom @user.Nom</strong></td>
+                                            <td>@user.Email</td>
+                                            <td>
+                                                @if (user.Roles != null && user.Roles.Any())
+                                                {
+                                                    @foreach (var role in user.Roles)
+                                                    {
+                                                        <span class="badge bg-primary me-1">@role.Nom</span>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">Aucun rôle</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <a href="@Url.Action("UserRoles", new { id = user.Id })" class="btn btn-sm btn-outline-info" title="Gérer les rôles">
+                                                    <i class="bi bi-shield"></i> Gérer les rôles
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Filtrage des tableaux
+            document.querySelectorAll('.search-table').forEach(input => {
+                input.addEventListener('keyup', function() {
+                    const searchTerm = this.value.toLowerCase();
+                    const tableId = this.getAttribute('data-table');
+                    const rows = document.querySelectorAll(`#${tableId} tbody tr`);
+                    
+                    rows.forEach(row => {
+                        const text = row.textContent.toLowerCase();
+                        row.style.display = text.includes(searchTerm) ? '' : 'none';
+                    });
+                });
+            });
+        });
+    </script>
+}

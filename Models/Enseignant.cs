@@ -10,7 +10,8 @@ namespace PGSA_Licence3.Models
         [MaxLength(100)]
         public string? Specialite { get; set; }
 
-        public DateTime DateEmbauche { get; set; } = DateTime.UtcNow;         public ICollection<Cours>? Cours { get; set; } = new List<Cours>();
+        public DateTime DateEmbauche { get; set; } = DateTime.UtcNow;     
+            public ICollection<Cours>? Cours { get; set; } = new List<Cours>();
 
     }
 }

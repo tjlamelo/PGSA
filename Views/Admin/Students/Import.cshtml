@@ -17,17 +17,15 @@
                         <h2 class="h5 mb-0 text-gray-800">@ViewData["Title"]</h2>
                         <p class="text-muted mb-0 mt-1">Importez des étudiants depuis un fichier Excel (.xlsx, .xls)</p>
                     </div>
-
                     <div class="d-flex">
                         <form asp-action="Import" method="post" enctype="multipart/form-data" id="importForm" class="d-flex align-items-center me-2">
                             <div class="input-group input-group-sm">
                                 <input type="file" name="file" accept=".xlsx,.xls" class="form-control form-control-sm" id="fileInput" required />
-                                <button type="submit" class="btn btn-primary btn-sm">
+                                <button type="submit" class="btn btn-primary btn-sm" id="importButton">
                                     <i class="bi bi-upload me-1"></i>Importer
                                 </button>
                             </div>
                         </form>
-
                         <button class="btn btn-success btn-sm" id="submitImportBtn" disabled>
                             <i class="bi bi-save me-1"></i>Enregistrer l'import
                         </button>
@@ -38,20 +36,64 @@
                     <div class="alert alert-info d-flex align-items-center" role="alert">
                         <i class="bi bi-info-circle-fill me-2"></i>
                         <div>
-                            <strong>Instructions :</strong> 
+                            <strong>Instructions :</strong>
                             <ul class="mb-0 mt-1">
-                                <li>Téléchargez le modèle Excel pour vous assurer que vos données sont correctement formatées</li>
-                                <li>Le fichier doit contenir les colonnes : Matricule, Nom, Prénom, Email, Téléphone, Niveau, Filière, Spécialité</li>
-                                <li>La taille maximale du fichier est de 5MB</li>
+                                <li>Téléchargez le modèle Excel pour vous assurer que vos données sont correctement formatées.</li>
+                                <li>Le fichier doit contenir les colonnes : Email, Nom, Prénom, Téléphone, Date d'inscription.</li>
+                                <li><strong>Sélectionnez obligatoirement le cycle, le niveau et la spécialité</strong> avant d'importer le fichier.</li>
+                                <li>La taille maximale du fichier est de 5MB.</li>
                             </ul>
+                        </div>
+                    </div>
+
+                    <!-- Sélection du cycle, niveau et spécialité -->
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="cycleSelect" class="form-label">Cycle <span class="text-danger">*</span></label>
+                            <select id="cycleSelect" class="form-select" required>
+                                <option value="">Sélectionner un cycle</option>
+                                @if (ViewBag.Cycles != null)
+                                {
+                                    @foreach (var cycle in ViewBag.Cycles)
+                                    {
+                                        <option value="@cycle.Id">@cycle.NomCycle</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="niveauSelect" class="form-label">Niveau <span class="text-danger">*</span></label>
+                            <select id="niveauSelect" class="form-select" required>
+                                <option value="">Sélectionner un niveau</option>
+                                @if (ViewBag.Niveaux != null)
+                                {
+                                    @foreach (var niveau in ViewBag.Niveaux)
+                                    {
+                                        <option value="@niveau.Id">@niveau.NomNiveau</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="specialiteSelect" class="form-label">Spécialité <span class="text-danger">*</span></label>
+                            <select id="specialiteSelect" class="form-select" required>
+                                <option value="">Sélectionner une spécialité</option>
+                                @if (ViewBag.Specialites != null)
+                                {
+                                    @foreach (var specialite in ViewBag.Specialites)
+                                    {
+                                        <option value="@specialite.Id">@specialite.NomSpecialite</option>
+                                    }
+                                }
+                            </select>
                         </div>
                     </div>
 
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <div>
-                            <button class="btn btn-sm btn-outline-secondary" id="downloadTemplateBtn">
+                            <a href="/Students/DownloadTemplate" class="btn btn-sm btn-outline-secondary" id="downloadTemplateBtn">
                                 <i class="bi bi-download me-1"></i>Télécharger le modèle
-                            </button>
+                            </a>
                         </div>
                         <div class="d-flex align-items-center">
                             <span class="me-2 text-muted">Étudiants importés:</span>
@@ -59,6 +101,10 @@
                         </div>
                     </div>
 
+                    <!-- Conteneur pour les messages d'import (succès, erreur, info) -->
+                    <div id="import-message-container"></div>
+
+                    <!-- Conteneur pour le tableau des résultats -->
                     <div id="import-result" class="mt-3"></div>
                 </div>
             </div>
@@ -66,6 +112,7 @@
     </div>
 </div>
 
+@* Les modales et le conteneur de toasts restent les mêmes ... *@
 <!-- MODAL EDITION ETUDIANT -->
 <div class="modal fade" id="studentModal" tabindex="-1" aria-labelledby="studentModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
@@ -79,107 +126,51 @@
             <div class="modal-body">
                 <form id="editStudentForm">
                     <input type="hidden" id="edit_index">
-                    
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="edit_matricule" class="form-label">Matricule</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-hash"></i></span>
-                                <input type="text" id="edit_matricule" class="form-control" required>
-                            </div>
+                            <div class="input-group"><span class="input-group-text"><i class="bi bi-hash"></i></span><input type="text" id="edit_matricule" class="form-control" readonly></div>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="edit_username" class="form-label">Username</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-person"></i></span>
-                                <input type="text" id="edit_username" class="form-control" required>
-                            </div>
+                            <div class="input-group"><span class="input-group-text"><i class="bi bi-person"></i></span><input type="text" id="edit_username" class="form-control" readonly></div>
                         </div>
                     </div>
-                    
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="edit_nom" class="form-label">Nom</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
-                                <input type="text" id="edit_nom" class="form-control" required>
-                            </div>
+                            <div class="input-group"><span class="input-group-text"><i class="bi bi-person-badge"></i></span><input type="text" id="edit_nom" class="form-control" required></div>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="edit_prenom" class="form-label">Prénom</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
-                                <input type="text" id="edit_prenom" class="form-control" required>
-                            </div>
+                            <div class="input-group"><span class="input-group-text"><i class="bi bi-person-badge"></i></span><input type="text" id="edit_prenom" class="form-control" required></div>
                         </div>
                     </div>
-                    
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="edit_email" class="form-label">Email</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-                                <input type="email" id="edit_email" class="form-control" required>
-                            </div>
+                            <div class="input-group"><span class="input-group-text"><i class="bi bi-envelope"></i></span><input type="email" id="edit_email" class="form-control" required></div>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="edit_emailInstitutionnel" class="form-label">Email institutionnel</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-envelope-at"></i></span>
-                                <input type="email" id="edit_emailInstitutionnel" class="form-control">
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="edit_telephone" class="form-label">Téléphone</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-telephone"></i></span>
-                                <input type="tel" id="edit_telephone" class="form-control">
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="edit_dateInscription" class="form-label">Date d'inscription</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
-                                <input type="date" id="edit_dateInscription" class="form-control">
-                            </div>
+                            <div class="input-group"><span class="input-group-text"><i class="bi bi-telephone"></i></span><input type="tel" id="edit_telephone" class="form-control"></div>
                         </div>
                     </div>
-                    
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <label for="edit_niveau" class="form-label">Niveau</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-bar-chart-steps"></i></span>
-                                <input type="text" id="edit_niveau" class="form-control" required>
-                            </div>
+                     <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_dateInscription" class="form-label">Date d'inscription</label>
+                            <div class="input-group"><span class="input-group-text"><i class="bi bi-calendar-event"></i></span><input type="date" id="edit_dateInscription" class="form-control"></div>
                         </div>
-                        <div class="col-md-4 mb-3">
-                            <label for="edit_filiere" class="form-label">Filière</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-book"></i></span>
-                                <input type="text" id="edit_filiere" class="form-control" required>
-                            </div>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label for="edit_specialite" class="form-label">Spécialité</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-mortarboard"></i></span>
-                                <input type="text" id="edit_specialite" class="form-control">
-                            </div>
+                        <div class="col-md-6 mb-3">
+                             <label for="edit_emailInstitutionnel" class="form-label">Email Institutionnel</label>
+                            <div class="input-group"><span class="input-group-text"><i class="bi bi-envelope-at"></i></span><input type="email" id="edit_emailInstitutionnel" class="form-control" readonly></div>
                         </div>
                     </div>
                 </form>
             </div>
             <div class="modal-footer bg-light">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="bi bi-x-circle me-1"></i>Annuler
-                </button>
-                <button type="button" class="btn btn-primary" id="saveEditBtn">
-                    <i class="bi bi-check-circle me-1"></i>Enregistrer
-                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="bi bi-x-circle me-1"></i>Annuler</button>
+                <button type="button" class="btn btn-primary" id="saveEditBtn"><i class="bi bi-check-circle me-1"></i>Enregistrer</button>
             </div>
         </div>
     </div>
@@ -190,19 +181,13 @@
     <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content border-0 shadow-lg">
             <div class="modal-header bg-info text-white border-0">
-                <h5 class="modal-title" id="reportModalLabel">
-                    <i class="bi bi-clipboard-data me-2"></i>Rapport de l'import
-                </h5>
+                <h5 class="modal-title" id="reportModalLabel"><i class="bi bi-clipboard-data me-2"></i>Rapport de l'import</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="reportModalBody"></div>
             <div class="modal-footer bg-light">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="bi bi-x-circle me-1"></i>Fermer
-                </button>
-                <button type="button" class="btn btn-primary" id="exportReportBtn">
-                    <i class="bi bi-download me-1"></i>Exporter le rapport
-                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="bi bi-x-circle me-1"></i>Fermer</button>
+                <button type="button" class="btn btn-primary" id="exportReportBtn"><i class="bi bi-download me-1"></i>Exporter le rapport</button>
             </div>
         </div>
     </div>
@@ -213,21 +198,13 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
             <div class="modal-header bg-warning text-white border-0">
-                <h5 class="modal-title" id="confirmModalLabel">
-                    <i class="bi bi-exclamation-triangle me-2"></i>Confirmation
-                </h5>
+                <h5 class="modal-title" id="confirmModalLabel"><i class="bi bi-exclamation-triangle me-2"></i>Confirmation</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <p id="confirmMessage">Êtes-vous sûr de vouloir effectuer cette action ?</p>
-            </div>
+            <div class="modal-body"><p id="confirmMessage">Êtes-vous sûr de vouloir effectuer cette action ?</p></div>
             <div class="modal-footer bg-light">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="bi bi-x-circle me-1"></i>Annuler
-                </button>
-                <button type="button" class="btn btn-warning" id="confirmActionBtn">
-                    <i class="bi bi-check-circle me-1"></i>Confirmer
-                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="bi bi-x-circle me-1"></i>Annuler</button>
+                <button type="button" class="btn btn-warning" id="confirmActionBtn"><i class="bi bi-check-circle me-1"></i>Confirmer</button>
             </div>
         </div>
     </div>
@@ -235,471 +212,343 @@
 
 <!-- CONTAINER POUR TOASTS -->
 <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 11">
-    <div id="successToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-        <div class="toast-header bg-success text-white">
-            <i class="bi bi-check-circle-fill me-2"></i>
-            <strong class="me-auto">Succès</strong>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
-        </div>
-        <div class="toast-body">
-            Opération réussie !
-        </div>
-    </div>
-    
-    <div id="errorToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-        <div class="toast-header bg-danger text-white">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i>
-            <strong class="me-auto">Erreur</strong>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
-        </div>
-        <div class="toast-body">
-            Une erreur s'est produite !
-        </div>
-    </div>
-    
-    <div id="infoToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-        <div class="toast-header bg-info text-white">
-            <i class="bi bi-info-circle-fill me-2"></i>
-            <strong class="me-auto">Information</strong>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
-        </div>
-        <div class="toast-body">
-            Information importante !
-        </div>
-    </div>
+    <div id="successToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true"><div class="toast-header bg-success text-white"><i class="bi bi-check-circle-fill me-2"></i><strong class="me-auto">Succès</strong><button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button></div><div class="toast-body">Opération réussie !</div></div>
+    <div id="errorToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true"><div class="toast-header bg-danger text-white"><i class="bi bi-exclamation-triangle-fill me-2"></i><strong class="me-auto">Erreur</strong><button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button></div><div class="toast-body">Une erreur s'est produite !</div></div>
+    <div id="infoToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true"><div class="toast-header bg-info text-white"><i class="bi bi-info-circle-fill me-2"></i><strong class="me-auto">Information</strong><button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button></div><div class="toast-body">Information importante !</div></div>
 </div>
 
 @section Scripts {
 <script>
 document.addEventListener("DOMContentLoaded", () => {
+    // --- ÉLÉMENTS DU DOM ---
     const form = document.getElementById('importForm');
+    const fileInput = document.getElementById('fileInput');
+    const importButton = document.getElementById('importButton');
     const resultDiv = document.getElementById('import-result');
+    const messageContainer = document.getElementById('import-message-container');
     const saveBtn = document.getElementById('submitImportBtn');
-    const saveEditBtn = document.getElementById("saveEditBtn");
-    const reportBody = document.getElementById("reportModalBody");
     const studentCount = document.getElementById('studentCount');
-    const downloadTemplateBtn = document.getElementById('downloadTemplateBtn');
-    const exportReportBtn = document.getElementById('exportReportBtn');
+    const cycleSelect = document.getElementById('cycleSelect');
+    const niveauSelect = document.getElementById('niveauSelect');
+    const specialiteSelect = document.getElementById('specialiteSelect');
+
+    // --- MODALES ET TOASTS ---
     const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
-    const confirmMessage = document.getElementById('confirmMessage');
-    const confirmActionBtn = document.getElementById('confirmActionBtn');
-    
-    // Toasts
+    const reportModal = new bootstrap.Modal(document.getElementById('reportModal'));
+    const studentModal = new bootstrap.Modal(document.getElementById('studentModal'));
     const successToast = new bootstrap.Toast(document.getElementById('successToast'));
     const errorToast = new bootstrap.Toast(document.getElementById('errorToast'));
     const infoToast = new bootstrap.Toast(document.getElementById('infoToast'));
 
-    if (!form || !resultDiv || !saveBtn || !saveEditBtn || !reportBody) {
-        console.error("Éléments requis introuvables dans le DOM !");
-        return;
+    // --- ÉTAT DE L'APPLICATION ---
+    let importedStudents = [];
+
+    // --- FONCTIONS UTILITAIRES ---
+
+    /**
+     * Affiche un message toast à l'utilisateur.
+     * @@param {'success'|'error'|'info'} type  <-- CORRECTION ICI
+     * @@param {string} message               <-- CORRECTION ICI
+     */
+    function showToast(type, message) {
+        const toastMap = { success: successToast, error: errorToast, info: infoToast };
+        const toast = toastMap[type];
+        if (!toast) return;
+        toast._element.querySelector('.toast-body').textContent = message;
+        toast.show();
     }
 
-    let importedStudents = [];
-    let currentAction = null;
+    /**
+     * Affiche un message dans la vue (plus visible qu'un toast).
+     * @@param {'success'|'error'|'warning'|'info'} type <-- CORRECTION ICI
+     * @@param {string} message                           <-- CORRECTION ICI
+     */
+    function displayImportMessage(type, message) {
+        const alertClass = `alert-${type === 'error' ? 'danger' : type}`;
+        const iconMap = { success: 'check-circle-fill', error: 'exclamation-triangle-fill', warning: 'exclamation-triangle-fill', info: 'info-circle-fill' };
+        const icon = iconMap[type] || 'info-circle-fill';
+        messageContainer.innerHTML = `
+            <div class="alert d-flex align-items-center ${alertClass}" role="alert">
+                <i class="bi bi-${icon} me-2"></i>
+                <div>${message}</div>
+            </div>`;
+    }
 
-    // ================================
-    //      TÉLÉCHARGER MODÈLE
-    // ================================
-    downloadTemplateBtn.addEventListener('click', () => {
-        // Simuler le téléchargement d'un modèle
-        showToast('info', 'Le modèle Excel est en cours de téléchargement...');
-        
-        // Dans une application réelle, vous feriez une requête pour télécharger le fichier
-        setTimeout(() => {
-            showToast('success', 'Modèle Excel téléchargé avec succès !');
-        }, 1500);
-    });
+    /**
+     * Log les erreurs dans la console pour le débogage.
+     * @@param {string} context               <-- CORRECTION ICI
+     * @@param {Error|object|string} error    <-- CORRECTION ICI
+     */
+    function logError(context, error) {
+        console.error(`[ERREUR - ${context}]`, error);
+        if (error instanceof Error) {
+            console.error(`Stack Trace: ${error.stack}`);
+        }
+    }
 
-    // ================================
-    //      IMPORT EXCEL
-    // ================================
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const fileInput = document.getElementById('fileInput');
-        if (!fileInput.files.length) {
-            showToast('error', 'Veuillez sélectionner un fichier Excel à importer.');
-            return;
-        }
-        
-        const file = fileInput.files[0];
-        if (file.size > 5 * 1024 * 1024) { // 5MB
-            showToast('error', 'Le fichier est trop volumineux. La taille maximale est de 5MB.');
-            return;
-        }
-        
+    /**
+     * Affiche l'indicateur de chargement.
+     */
+    function showLoadingIndicator() {
         resultDiv.innerHTML = `
             <div class="d-flex justify-content-center align-items-center py-5">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Chargement...</span>
-                </div>
-                <span class="ms-3">Importation en cours...</span>
-            </div>
-        `;
-        
-        const formData = new FormData(form);
+                <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Chargement...</span></div>
+                <span class="ms-3">Traitement du fichier en cours...</span>
+            </div>`;
+        messageContainer.innerHTML = ''; // Efface les anciens messages
+    }
 
-        try {
-            const response = await fetch(form.action, { method: "POST", body: formData });
-            let data;
-            try {
-                data = await response.json();
-            } catch (err) {
-                const text = await response.text();
-                showToast('error', `Erreur serveur lors de l'import : ${text.substring(0, 100)}...`);
-                return;
-            }
+    /**
+     * Efface les résultats de l'import.
+     */
+    function clearResults() {
+        importedStudents = [];
+        renderTable();
+        saveBtn.disabled = true;
+        studentCount.textContent = "0";
+        resultDiv.innerHTML = '';
+        messageContainer.innerHTML = '';
+    }
 
-            if (!response.ok) {
-                showToast('error', `Erreur import : ${data.error || data.message || 'Inconnue'}`);
-                return;
-            }
+    // --- LOGIQUE MÉTIER ---
 
-            importedStudents = data;
-            renderTable();
-            saveBtn.disabled = importedStudents.length === 0;
-            studentCount.textContent = importedStudents.length;
-            
-            if (importedStudents.length > 0) {
-                showToast('success', `${importedStudents.length} étudiants importés avec succès !`);
-            } else {
-                showToast('info', 'Aucun étudiant trouvé dans le fichier.');
-            }
-        } catch (err) {
-            showToast('error', `Erreur import : ${err.message}`);
-        }
-    });
-
-    // ================================
-    //      AFFICHAGE TABLEAU
-    // ================================
+    /**
+     * Génère et affiche le tableau des étudiants importés.
+     */
     function renderTable() {
-        if (importedStudents.length === 0) {
+        if (!Array.isArray(importedStudents) || importedStudents.length === 0) {
             resultDiv.innerHTML = `
-                <div class="text-center py-5">
-                    <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
-                    <p class="text-muted mt-3">Aucun étudiant importé. Veuillez importer un fichier Excel.</p>
-                </div>
-            `;
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                    <p class="mt-3">Aucun étudiant importé. Veuillez importer un fichier Excel.</p>
+                </div>`;
             return;
         }
 
-        let table = `
+        const cycleText = cycleSelect.options[cycleSelect.selectedIndex]?.text || 'N/A';
+        const niveauText = niveauSelect.options[niveauSelect.selectedIndex]?.text || 'N/A';
+        const specialiteText = specialiteSelect.options[specialiteSelect.selectedIndex]?.text || 'N/A';
+
+        let tableHtml = `
             <div class="table-responsive">
-                <table class="table table-hover table-striped" id="studentsTable">
+                <table class="table table-hover table-striped align-middle" id="studentsTable">
                     <thead class="table-dark">
                         <tr>
-                            <th>Matricule</th>
-                            <th>Nom</th>
-                            <th>Prénom</th>
-                            <th>Email</th>
-                            <th>Filière</th>
-                            <th>Niveau</th>
-                            <th>Actions</th>
+                            <th>Matricule</th><th>Nom</th><th>Prénom</th><th>Email</th>
+                            <th>Téléphone</th><th>Date d'inscription</th><th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>`;
 
-        importedStudents.forEach((s, i) => {
-            table += `
-                <tr class="student-row" data-index="${i}">
-                    <td><strong>${s.matricule}</strong></td>
-                    <td>${s.nom}</td>
-                    <td>${s.prenom}</td>
-                    <td>${s.email}</td>
-                    <td><span class="badge bg-info">${s.filiere}</span></td>
-                    <td><span class="badge bg-secondary">${s.niveau}</span></td>
+        importedStudents.forEach((student, index) => {
+            const dateInscription = student.dateInscription ? new Date(student.dateInscription).toLocaleDateString('fr-FR') : 'N/A';
+            tableHtml += `
+                <tr class="student-row" data-index="${index}">
+                    <td><strong>${student.matricule}</strong></td><td>${student.nom}</td><td>${student.prenom}</td>
+                    <td>${student.email}</td><td>${student.telephone || 'N/A'}</td><td>${dateInscription}</td>
                     <td>
-                        <div class="btn-group btn-group-sm">
-                            <button class="btn btn-outline-primary edit-btn" data-index="${i}" title="Modifier">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            <button class="btn btn-outline-danger delete-btn" data-index="${i}" title="Supprimer">
-                                <i class="bi bi-trash"></i>
-                            </button>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button class="btn btn-outline-primary edit-btn" data-index="${index}" title="Modifier"><i class="bi bi-pencil"></i></button>
+                            <button class="btn btn-outline-danger delete-btn" data-index="${index}" title="Supprimer"><i class="bi bi-trash"></i></button>
                         </div>
                     </td>
                 </tr>`;
         });
 
-        table += `</tbody></table></div>`;
-        resultDiv.innerHTML = table;
+        tableHtml += `</tbody></table></div>`;
+        resultDiv.innerHTML = tableHtml;
 
-        // Événements pour les boutons d'édition et de suppression
-        document.querySelectorAll(".edit-btn").forEach(btn => {
-            btn.addEventListener("click", (e) => {
-                e.stopPropagation();
-                const index = btn.dataset.index;
-                openStudentModal(index);
-            });
+        // Attacher les écouteurs d'événements
+        document.querySelectorAll('.edit-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => { e.stopPropagation(); openEditModal(btn.dataset.index); });
         });
-
-        document.querySelectorAll(".delete-btn").forEach(btn => {
-            btn.addEventListener("click", (e) => {
-                e.stopPropagation();
-                const index = btn.dataset.index;
-                const student = importedStudents[index];
-                
-                confirmMessage.textContent = `Êtes-vous sûr de vouloir supprimer l'étudiant ${student.nom} ${student.prenom} (${student.matricule}) ?`;
-                
-                confirmActionBtn.onclick = () => {
-                    importedStudents.splice(index, 1);
-                    renderTable();
-                    saveBtn.disabled = importedStudents.length === 0;
-                    studentCount.textContent = importedStudents.length;
-                    confirmModal.hide();
-                    showToast('success', 'Étudiant supprimé avec succès !');
-                };
-                
-                confirmModal.show();
-            });
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => { e.stopPropagation(); confirmDelete(btn.dataset.index); });
         });
-
-        // Click sur la ligne pour ouvrir le modal
-        document.querySelectorAll(".student-row").forEach(row => {
-            row.addEventListener("click", (e) => {
-                // Ignorer si on clique sur un bouton
-                if (e.target.closest('button')) return;
-                
-                const index = row.dataset.index;
-                openStudentModal(index);
-            });
+        document.querySelectorAll('.student-row').forEach(row => {
+            row.addEventListener('click', (e) => { if (!e.target.closest('button')) openEditModal(row.dataset.index); });
         });
     }
 
-    // ================================
-    //      MODAL EDITION
-    // ================================
-    function openStudentModal(index) {
-        const st = importedStudents[index];
-        if (!st) return;
+    // --- GESTIONNAIRES D'ÉVÉNEMENTS ---
 
-        document.getElementById("edit_index").value = index;
-        document.getElementById("edit_matricule").value = st.matricule;
-        document.getElementById("edit_nom").value = st.nom;
-        document.getElementById("edit_prenom").value = st.prenom;
-        document.getElementById("edit_telephone").value = st.telephone ?? "";
-        document.getElementById("edit_niveau").value = st.niveau;
-        document.getElementById("edit_filiere").value = st.filiere;
-        document.getElementById("edit_specialite").value = st.specialite ?? "";
-        document.getElementById("edit_email").value = st.email;
-        document.getElementById("edit_emailInstitutionnel").value = st.emailInstitutionnel ?? "";
-        document.getElementById("edit_username").value = st.username;
-        document.getElementById("edit_dateInscription").value = st.dateInscription ? st.dateInscription.split("T")[0] : "";
+    // Soumission du formulaire d'import
+       form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        // 1. Validation côté client
+        if (!cycleSelect.value || !niveauSelect.value || !specialiteSelect.value) {
+            showToast('error', 'Veuillez sélectionner un cycle, un niveau et une spécialité.');
+            return;
+        }
+        if (!fileInput.files.length) {
+            showToast('error', 'Veuillez sélectionner un fichier Excel.');
+            return;
+        }
+        const file = fileInput.files[0];
+        if (file.size > 5 * 1024 * 1024) {
+            showToast('error', 'Le fichier est trop volumineux. La taille maximale est de 5MB.');
+            return;
+        }
 
-        const studentModal = new bootstrap.Modal(document.getElementById("studentModal"));
+        showLoadingIndicator();
+        importButton.disabled = true;
+
+        const formData = new FormData(form);
+        formData.append('cycleId', cycleSelect.value);
+        formData.append('niveauId', niveauSelect.value);
+        formData.append('specialiteId', specialiteSelect.value);
+
+        try {
+            const response = await fetch(form.action, { method: "POST", body: formData });
+
+            if (!response.ok) {
+                let errorData = { message: `Erreur serveur (${response.status})` };
+                try { errorData = await response.json(); } catch {}
+                const errorMessage = errorData.error || errorData.message || 'Erreur inconnue.';
+                logError('Fetch Response', `Status: ${response.status}, Message: ${errorMessage}`);
+                displayImportMessage('error', `Échec de l'import : ${errorMessage}`);
+                showToast('error', errorMessage);
+                return;
+            }
+
+            const data = await response.json();
+
+            // *** CORRECTION : Gérer les deux formats de réponse possibles ***
+            let studentsArray = data;
+
+            // Si la réponse est un objet avec une propriété $values, utiliser celle-ci
+            if (data && typeof data === 'object' && Array.isArray(data.$values)) {
+                studentsArray = data.$values;
+            }
+
+            // *** VÉRIFICATION CRUCIALE : S'assurer que la réponse est bien un tableau ***
+            if (!Array.isArray(studentsArray)) {
+                logError('Invalid Response Format', 'Le serveur a renvoyé un format inattendu. Réponse reçue : ' + JSON.stringify(data));
+                displayImportMessage('error', "Le serveur a renvoyé une réponse inattendue. Vérifiez la console pour plus de détails.");
+                showToast('error', "Format de réponse du serveur invalide.");
+                return;
+            }
+
+            // Succès
+            importedStudents = studentsArray; // Utiliser le tableau extrait
+            renderTable();
+            saveBtn.disabled = importedStudents.length === 0;
+            studentCount.textContent = importedStudents.length;
+            
+            if (importedStudents.length > 0) {
+                displayImportMessage('success', `${importedStudents.length} étudiant(s) importé(s) avec succès. Vérifiez les données avant de les enregistrer.`);
+                showToast('success', `${importedStudents.length} étudiants importés !`);
+            } else {
+                displayImportMessage('warning', "Le fichier a été traité, mais aucun étudiant valide n'a été trouvé. Vérifiez le format des données.");
+                showToast('info', 'Aucun étudiant trouvé dans le fichier.');
+            }
+
+        } catch (error) {
+            logError('Network/Parsing Error', error);
+            displayImportMessage('error', "Une erreur réseau est survenue. Vérifiez votre connexion ou réessayez plus tard.");
+            showToast('error', `Erreur réseau : ${error.message}`);
+        } finally {
+            importButton.disabled = false;
+        }
+    });
+
+
+    // Bouton de téléchargement du modèle
+    document.getElementById('downloadTemplateBtn').addEventListener('click', () => {
+        showToast('info', 'Le modèle Excel est en cours de téléchargement...');
+    });
+
+    // Logique pour le modal d'édition
+    function openEditModal(index) {
+        const student = importedStudents[index];
+        if (!student) return;
+        document.getElementById('edit_index').value = index;
+        document.getElementById('edit_matricule').value = student.matricule;
+        document.getElementById('edit_nom').value = student.nom;
+        document.getElementById('edit_prenom').value = student.prenom;
+        document.getElementById('edit_email').value = student.email;
+        document.getElementById('edit_telephone').value = student.telephone || '';
+        document.getElementById('edit_dateInscription').value = student.dateInscription ? student.dateInscription.split('T')[0] : '';
+        document.getElementById('edit_emailInstitutionnel').value = student.emailInstitutionnel || '';
+        document.getElementById('edit_username').value = student.username;
         studentModal.show();
     }
 
-    // ================================
-    //      ENREGISTRER EDITION MODAL
-    // ================================
-    saveEditBtn.addEventListener("click", () => {
-        const index = document.getElementById("edit_index").value;
-        if (index === "") return;
-
-        // Validation simple
-        const matricule = document.getElementById("edit_matricule").value.trim();
-        const nom = document.getElementById("edit_nom").value.trim();
-        const prenom = document.getElementById("edit_prenom").value.trim();
-        const email = document.getElementById("edit_email").value.trim();
+    document.getElementById('saveEditBtn').addEventListener('click', () => {
+        const index = document.getElementById('edit_index').value;
+        const student = importedStudents[index];
+        if (!student) return;
         
-        if (!matricule || !nom || !prenom || !email) {
-            showToast('error', 'Veuillez remplir tous les champs obligatoires.');
-            return;
-        }
-
-        importedStudents[index] = {
-            ...importedStudents[index],
-            matricule: matricule,
-            nom: nom,
-            prenom: prenom,
-            telephone: document.getElementById("edit_telephone").value.trim(),
-            niveau: document.getElementById("edit_niveau").value.trim(),
-            filiere: document.getElementById("edit_filiere").value.trim(),
-            specialite: document.getElementById("edit_specialite").value.trim(),
-            email: email,
-            emailInstitutionnel: document.getElementById("edit_emailInstitutionnel").value.trim(),
-            username: document.getElementById("edit_username").value.trim(),
-            dateInscription: document.getElementById("edit_dateInscription").value
-        };
+        student.nom = document.getElementById('edit_nom').value.trim();
+        student.prenom = document.getElementById('edit_prenom').value.trim();
+        student.email = document.getElementById('edit_email').value.trim();
+        student.telephone = document.getElementById('edit_telephone').value.trim();
+        student.dateInscription = document.getElementById('edit_dateInscription').value;
 
         renderTable();
-        bootstrap.Modal.getInstance(document.getElementById("studentModal")).hide();
-        showToast('success', 'Informations de l\'étudiant mises à jour avec succès !');
+        studentModal.hide();
+        showToast('success', 'Modifications enregistrées localement.');
     });
 
-    // ================================
-    //      ENREGISTRER EN BD
-    // ================================
-    saveBtn.addEventListener("click", () => {
-        if (importedStudents.length === 0) {
-            showToast('error', 'Aucun étudiant à enregistrer.');
-            return;
-        }
-        
-        confirmMessage.textContent = `Êtes-vous sûr de vouloir enregistrer ${importedStudents.length} étudiants dans la base de données ?`;
-        
-        confirmActionBtn.onclick = () => {
+    // Logique de confirmation de suppression
+    function confirmDelete(index) {
+        const student = importedStudents[index];
+        document.getElementById('confirmMessage').textContent = `Supprimer l'étudiant ${student.nom} ${student.prenom} (${student.matricule}) ?`;
+        document.getElementById('confirmActionBtn').onclick = () => {
+            importedStudents.splice(index, 1);
+            renderTable();
+            saveBtn.disabled = importedStudents.length === 0;
+            studentCount.textContent = importedStudents.length;
             confirmModal.hide();
-            performSave();
+            showToast('success', 'Étudiant supprimé de la liste.');
         };
-        
+        confirmModal.show();
+    }
+    
+    // Logique pour l'enregistrement final en base de données
+    saveBtn.addEventListener('click', () => {
+        document.getElementById('confirmMessage').textContent = `Confirmer l'enregistrement de ${importedStudents.length} étudiant(s) en base de données ?`;
+        document.getElementById('confirmActionBtn').onclick = async () => {
+            confirmModal.hide();
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span>Enregistrement...`;
+
+            try {
+                const response = await fetch('/Students/Save', {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ students: importedStudents })
+                });
+                const result = await response.json();
+
+                if (!response.ok) throw new Error(result.error || 'Erreur lors de la sauvegarde.');
+
+                // Afficher le rapport
+                let reportHtml = `<div class="alert alert-success"><strong>${result.message}</strong></div>`;
+                if (result.conflicts && result.conflicts.length > 0) {
+                    reportHtml += `<div class="alert alert-warning mt-2"><strong>Conflits (${result.conflicts.length})</strong><div class="table-responsive mt-2"><table class="table table-sm"><thead><tr><th>Matricule</th><th>Email</th><th>Problème</th></tr></thead><tbody>`;
+                    result.conflicts.forEach(c => { reportHtml += `<tr><td>${c.matricule}</td><td>${c.email}</td><td>${c.problem}</td></tr>`; });
+                    reportHtml += `</tbody></table></div></div>`;
+                }
+                document.getElementById('reportModalBody').innerHTML = reportHtml;
+                reportModal.show();
+                
+                // Réinitialiser la vue
+                clearResults();
+                fileInput.value = '';
+                showToast('success', 'Opération terminée.');
+
+            } catch (error) {
+                logError('Save to DB', error);
+                showToast('error', `Échec de l'enregistrement : ${error.message}`);
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="bi bi-save me-1"></i>Enregistrer l\'import';
+            }
+        };
         confirmModal.show();
     });
-    
-    async function performSave() {
-        saveBtn.disabled = true;
-        saveBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Enregistrement...`;
-
-        try {
-            const requestPayload = { students: importedStudents };
-
-            const response = await fetch("/Students/Save", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(requestPayload)
-            });
-
-            let res;
-            try {
-                res = await response.json();
-            } catch (err) {
-                const text = await response.text();
-                showToast('error', `Erreur serveur : ${text.substring(0, 100)}...`);
-                return;
-            }
-
-            if (!response.ok) {
-                showToast('error', `Erreur serveur : ${res.error || res.message || 'Inconnue'}`);
-                return;
-            }
-
-            let html = `<div class="alert alert-success d-flex align-items-center" role="alert">
-                <i class="bi bi-check-circle-fill me-2"></i>
-                <div>
-                    <strong>${res.message}</strong>
-                </div>
-            </div>`;
-            
-            if (res.conflicts && res.conflicts.length > 0) {
-                html += `
-                    <div class="alert alert-warning d-flex align-items-center mt-3" role="alert">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                        <div>
-                            <strong>Conflits détectés (${res.conflicts.length}) :</strong>
-                            <div class="table-responsive mt-2">
-                                <table class="table table-sm table-bordered">
-                                    <thead>
-                                        <tr>
-                                            <th>Matricule</th>
-                                            <th>Nom</th>
-                                            <th>Username</th>
-                                            <th>Email</th>
-                                            <th>Problème</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>`;
-                
-                res.conflicts.forEach(c => {
-                    html += `
-                        <tr>
-                            <td>${c.matricule}</td>
-                            <td>${c.nom}</td>
-                            <td>${c.username}</td>
-                            <td>${c.email}</td>
-                            <td>${c.problem}</td>
-                        </tr>`;
-                });
-                
-                html += `
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>`;
-            }
-            
-            if (res.successCount > 0) {
-                html += `
-                    <div class="alert alert-info d-flex align-items-center mt-3" role="alert">
-                        <i class="bi bi-info-circle-fill me-2"></i>
-                        <div>
-                            <strong>${res.successCount} étudiants ont été importés avec succès.</strong>
-                        </div>
-                    </div>`;
-            }
-            
-            showReport(html);
-            importedStudents = [];
-            renderTable();
-            saveBtn.disabled = true;
-            studentCount.textContent = "0";
-            document.getElementById('fileInput').value = '';
-            showToast('success', 'Importation terminée avec succès !');
-
-        } catch (error) {
-            showToast('error', `Erreur serveur : ${error.message}`);
-        } finally {
-            saveBtn.disabled = false;
-            saveBtn.innerHTML = '<i class="bi bi-save me-1"></i>Enregistrer l\'import';
-        }
-    }
-
-    // ================================
-    //      EXPORTER RAPPORT
-    // ================================
-    exportReportBtn.addEventListener('click', () => {
-        showToast('info', 'Le rapport est en cours d\'exportation...');
-        
-        // Simuler l'exportation
-        setTimeout(() => {
-            showToast('success', 'Rapport exporté avec succès !');
-        }, 1500);
-    });
-
-    // ================================
-    //      AFFICHER RAPPORT
-    // ================================
-    function showReport(html) {
-        if (!reportBody) {
-            console.error("Le modal de rapport est introuvable !");
-            return;
-        }
-        reportBody.innerHTML = html;
-        const reportModal = new bootstrap.Modal(document.getElementById("reportModal"));
-        reportModal.show();
-    }
-    
-    // ================================
-    //      FONCTIONS TOAST
-    // ================================
-    function showToast(type, message) {
-        let toastElement;
-        let toastBody;
-        
-        switch(type) {
-            case 'success':
-                toastElement = document.getElementById('successToast');
-                toastBody = toastElement.querySelector('.toast-body');
-                break;
-            case 'error':
-                toastElement = document.getElementById('errorToast');
-                toastBody = toastElement.querySelector('.toast-body');
-                break;
-            case 'info':
-                toastElement = document.getElementById('infoToast');
-                toastBody = toastElement.querySelector('.toast-body');
-                break;
-            default:
-                toastElement = document.getElementById('infoToast');
-                toastBody = toastElement.querySelector('.toast-body');
-        }
-        
-        toastBody.textContent = message;
-        const toast = new bootstrap.Toast(toastElement);
-        toast.show();
-    }
 });
 </script>
 }

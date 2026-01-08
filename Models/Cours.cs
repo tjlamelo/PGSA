@@ -18,9 +18,7 @@ namespace PGSA_Licence3.Models
         [MaxLength(20)]
         public required string Code { get; set; }  
 
-        [Required]
-        [MaxLength(50)]
-        public required string Filiere { get; set; }    
+  
         
         [Required]
         [MaxLength(20)]
@@ -35,6 +33,23 @@ namespace PGSA_Licence3.Models
         [ForeignKey("EnseignantId")]
         public Enseignant? Enseignant { get; set; } 
         
+        [Required]
+        public int NiveauId { get; set; }
+        
+        [ForeignKey("NiveauId")]
+        public Niveau? Niveau { get; set; }
+        
+        [Required]
+        public int CycleId { get; set; }
+        
+        [ForeignKey("CycleId")]
+        public Cycle? Cycle { get; set; }
+        
+        [Required]
+        public int SpecialiteId { get; set; }
+        
+        [ForeignKey("SpecialiteId")]
+        public Specialite? Specialite { get; set; }
  
         public ICollection<Seance>? Seances { get; set; } = new List<Seance>();
 

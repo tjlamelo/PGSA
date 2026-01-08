@@ -1,0 +1,77 @@
+@{
+    var user = ViewBag.User as PGSA_Licence3.Models.User;
+    var allRoles = ViewBag.AllRoles as List<PGSA_Licence3.Models.Role>;
+    var userRoles = ViewBag.UserRoles as List<int>;
+
+    ViewData["Title"] = $"Gérer les rôles de l'utilisateur";
+    ViewData["Breadcrumb"] = new List<(string Text, string Url)>
+    {
+        ("Administration", "/Admin"),
+        ("Gestion des Rôles et Permissions", "/Admin/Permissions"),
+        ("Rôles de l'utilisateur", "#")
+    };
+    Layout = "_DashboardLayout";
+}
+
+<div class="container-fluid mt-4 fade-in">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Rôles de l'utilisateur : <strong>@user?.Prenom @user?.Nom</strong></h2>
+        <a href="@Url.Action("Index")" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Retour à la liste
+        </a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i> @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">Sélectionner les rôles pour cet utilisateur</h5>
+        </div>
+        <div class="card-body">
+            <form asp-action="UpdateUserRoles" asp-route-id="@user.Id" method="post">
+                @Html.AntiForgeryToken()
+                <div class="row">
+                    @if (allRoles != null)
+                    {
+                        @foreach (var role in allRoles)
+                        {
+                            var isChecked = userRoles != null && userRoles.Contains(role.Id);
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="@role.Id" 
+                                           id="role_@role.Id" name="selectedRoles" 
+                                           @(isChecked ? "checked" : "")>
+                                    <label class="form-check-label" for="role_@role.Id">
+                                        <strong>@role.Nom</strong>
+                                        <br />
+                                        <small class="text-muted">@role.Description</small>
+                                    </label>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+                <div class="d-flex justify-content-end mt-4">
+                    <a href="@Url.Action("Index")" class="btn btn-secondary me-2">Annuler</a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-2"></i>Enregistrer les rôles
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -18,48 +18,59 @@ namespace PGSA_Licence3.Controllers.Auth
             _loginService = new LoginService(db);
         }
 
-        // GET: /Login
-        [HttpGet]
-        public ActionResult Index()
-        {
-            if (User.Identity.IsAuthenticated)
-            {
-                return RedirectToAction("Index", "Dashboard");
-            }
-            return View("~/Views/Auth/Login.cshtml");
-        }
-
+     [HttpGet]
+public ActionResult Index()
+{
+    // User.Identity peut être null dans certains contextes, on utilise ?.
+    if (User.Identity?.IsAuthenticated ?? false)
+    {
+        return RedirectToAction("Index", "Dashboard");
+    }
+    return View("~/Views/Auth/Login.cshtml");
+}
         // POST: /Login
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Index(IFormCollection collection)
-        {
-            var email = collection["email"];
-            var password = collection["password"];
+ 
+[HttpPost]
+[ValidateAntiForgeryToken]
+public async Task<ActionResult> Index(IFormCollection collection)
+{
+    string? email = collection["email"];
+    string? password = collection["password"];
 
-            // La validation de base est toujours utile
-            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
-            {
-                ViewBag.Error = "L'email et le mot de passe sont requis.";
-                return View("~/Views/Auth/Login.cshtml");
-            }
+    // On vérifie que les chaînes ne sont pas nulles ou vides
+    if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+    {
+        ViewBag.Error = "L'email et le mot de passe sont requis.";
+        return View("~/Views/Auth/Login.cshtml");
+    }
 
-            // On délègue TOUTE la logique de validation au service
-            var user = await _loginService.ValidateUserCredentialsAsync(email, password);
+    // Ici, le compilateur sait que email et password ne sont pas nulls
+    var user = await _loginService.ValidateUserCredentialsAsync(email!, password!);
 
-            // Si le service renvoie null, c'est que les identifiants sont invalides
-            if (user == null)
-            {
-                ViewBag.Error = "Email ou mot de passe incorrect.";
-                return View("~/Views/Auth/Login.cshtml");
-            }
+    if (user == null)
+    {
+        ViewBag.Error = "Email ou mot de passe incorrect.";
+        return View("~/Views/Auth/Login.cshtml");
+    }
 
-            // L'utilisateur est valide, on le connecte
-            await SignInUser(user);
+    await SignInUser(user);
+    return RedirectToAction("Index", "Dashboard");
+}
 
-            // Rediriger vers le dashboard
-            return RedirectToAction("Index", "Dashboard");
-        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         // Cette méthode reste dans le contrôleur car elle gère des spécificités du framework HTTP (HttpContext, Cookies)
         private async Task SignInUser(User user)

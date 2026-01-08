@@ -46,6 +46,62 @@ namespace PGSA_Licence3.Services.Students
             return $"{yearStart}{yearEnd}{niveauLetter}{cycleLetter}{random}";
         }
 
+        /// Génère un template Excel pour l'importation des étudiants
+        public Stream GenerateTemplateExcel()
+        {
+            var stream = new MemoryStream();
+            
+            using (var package = new ExcelPackage(stream))
+            {
+                var worksheet = package.Workbook.Worksheets.Add("Étudiants");
+                
+                // Définir les en-têtes
+                worksheet.Cells[1, 1].Value = "Email";
+                worksheet.Cells[1, 2].Value = "Nom";
+                worksheet.Cells[1, 3].Value = "Prénom";
+                worksheet.Cells[1, 4].Value = "Téléphone";
+                worksheet.Cells[1, 5].Value = "Date d'inscription (JJ/MM/AAAA)";
+                
+                // Exemple de données
+                worksheet.Cells[2, 1].Value = "jean.dupont@example.com";
+                worksheet.Cells[2, 2].Value = "Dupont";
+                worksheet.Cells[2, 3].Value = "Jean";
+                worksheet.Cells[2, 4].Value = "0123456789";
+                worksheet.Cells[2, 5].Value = DateTime.Now.ToString("dd/MM/yyyy");
+                
+                // Mettre en forme les en-têtes
+                using (var range = worksheet.Cells[1, 1, 1, 5])
+                {
+                    range.Style.Font.Bold = true;
+                    range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                    range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                }
+                
+                package.Save();
+            }
+            
+            stream.Position = 0;
+            return stream;
+        }
+
+        /// Obtient la liste des cycles depuis la BD
+        public async Task<List<Cycle>> GetCyclesAsync()
+        {
+            return await _context.Cycles.ToListAsync();
+        }
+
+        /// Obtient la liste des niveaux depuis la BD
+        public async Task<List<Niveau>> GetNiveauxAsync()
+        {
+            return await _context.Niveaux.ToListAsync();
+        }
+
+        /// Obtient la liste des spécialités depuis la BD
+        public async Task<List<Specialite>> GetSpecialitesAsync()
+        {
+            return await _context.Specialites.ToListAsync();
+        }
+
         /// Lit Excel et ignore les lignes vides
         public List<Dictionary<string, string>> ImportExcel(Stream fileStream)
         {
@@ -57,55 +113,29 @@ namespace PGSA_Licence3.Services.Students
 
             for (int row = 2; row <= rowCount; row++)
             {
-                var matricule = ws.Cells[row, 2].Text.Trim();
-                var nomsPrenoms = ws.Cells[row, 3].Text.Trim();
+                var email = ws.Cells[row, 1].Text.Trim();
+                var nom = ws.Cells[row, 2].Text.Trim();
+                var prenom = ws.Cells[row, 3].Text.Trim();
                 var telephone = ws.Cells[row, 4].Text.Trim();
                 var dateInscription = ws.Cells[row, 5].Text.Trim();
-                var niveau = ws.Cells[row, 6].Text.Trim();
-                var cycle = ws.Cells[row, 7].Text.Trim();
-                var specialite = ws.Cells[row, 8].Text.Trim();
-                var motDePasse = ws.Cells[row, 9].Text.Trim();
 
                 // Ignorer la ligne si totalement vide
-                if (string.IsNullOrWhiteSpace(matricule) &&
-                    string.IsNullOrWhiteSpace(nomsPrenoms) &&
+                if (string.IsNullOrWhiteSpace(email) &&
+                    string.IsNullOrWhiteSpace(nom) &&
+                    string.IsNullOrWhiteSpace(prenom) &&
                     string.IsNullOrWhiteSpace(telephone) &&
-                    string.IsNullOrWhiteSpace(dateInscription) &&
-                    string.IsNullOrWhiteSpace(niveau) &&
-                    string.IsNullOrWhiteSpace(cycle) &&
-                    string.IsNullOrWhiteSpace(specialite) &&
-                    string.IsNullOrWhiteSpace(motDePasse))
+                    string.IsNullOrWhiteSpace(dateInscription))
                 {
                     continue;
                 }
 
-                // Parse nom et prénom
-                var names = nomsPrenoms.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                string nom = "";
-                string prenom = "";
-
-                if (names.Length >= 2)
-                {
-                    nom = string.Join(' ', names[0..2]);        // Les 2 premiers mots pour le nom
-                    prenom = string.Join(' ', names[2..]);      // Le reste pour le prénom
-                }
-                else if (names.Length == 1)
-                {
-                    nom = names[0];
-                    prenom = "";
-                }
-
                 var dict = new Dictionary<string, string>
                 {
-                    ["Matricule"] = matricule,
+                    ["Email"] = email,
                     ["Nom"] = nom,
                     ["Prenom"] = prenom,
                     ["Telephone"] = telephone,
-                    ["DateInscription"] = dateInscription,
-                    ["Niveau"] = string.IsNullOrWhiteSpace(niveau) ? "3" : niveau,
-                    ["Cycle"] = string.IsNullOrWhiteSpace(cycle) ? "Licence" : cycle,
-                    ["Specialite"] = specialite,
-                    ["MotDePasse"] = string.IsNullOrWhiteSpace(motDePasse) ? "" : motDePasse
+                    ["DateInscription"] = dateInscription
                 };
 
                 result.Add(dict);
@@ -114,53 +144,8 @@ namespace PGSA_Licence3.Services.Students
             return result;
         }
 
-        /// Récupère ou crée une entité Cycle
-        private async Task<Cycle> GetOrCreateCycleAsync(string nomCycle)
-        {
-            var cycle = await _context.Cycles.FirstOrDefaultAsync(c => c.NomCycle == nomCycle);
-            
-            if (cycle == null)
-            {
-                cycle = new Cycle { NomCycle = nomCycle };
-                _context.Cycles.Add(cycle);
-                await _context.SaveChangesAsync();
-            }
-            
-            return cycle;
-        }
-
-        /// Récupère ou crée une entité Niveau
-        private async Task<Niveau> GetOrCreateNiveauAsync(string nomNiveau)
-        {
-            var niveau = await _context.Niveaux.FirstOrDefaultAsync(n => n.NomNiveau == nomNiveau);
-            
-            if (niveau == null)
-            {
-                niveau = new Niveau { NomNiveau = nomNiveau };
-                _context.Niveaux.Add(niveau);
-                await _context.SaveChangesAsync();
-            }
-            
-            return niveau;
-        }
-
-        /// Récupère ou crée une entité Specialite
-        private async Task<Specialite> GetOrCreateSpecialiteAsync(string nomSpecialite)
-        {
-            var specialite = await _context.Specialites.FirstOrDefaultAsync(s => s.NomSpecialite == nomSpecialite);
-            
-            if (specialite == null)
-            {
-                specialite = new Specialite { NomSpecialite = nomSpecialite };
-                _context.Specialites.Add(specialite);
-                await _context.SaveChangesAsync();
-            }
-            
-            return specialite;
-        }
-
         /// Convertit une ligne en Etudiant complet
-        public async Task<Etudiant> ToEtudiantAsync(Dictionary<string, string> row)
+        public async Task<Etudiant> ToEtudiantAsync(Dictionary<string, string> row, int cycleId, int niveauId, int specialiteId)
         {
             // Prénom et nom complets depuis Excel
             string prenomComplet = row["Prenom"];
@@ -188,7 +173,7 @@ namespace PGSA_Licence3.Services.Students
             string cleanNom = CleanString(nom);
 
             string username = $"{cleanPrenom}.{cleanNom}";
-            string email = $"{cleanPrenom}.{cleanNom}@gmail.com";
+            string email = string.IsNullOrWhiteSpace(row["Email"]) ? $"{cleanPrenom}.{cleanNom}@gmail.com" : row["Email"];
             string emailInstitutionnel = $"{cleanPrenom}.{cleanNom}@saintjeaningenieur.org";
 
             // Date inscription
@@ -196,23 +181,27 @@ namespace PGSA_Licence3.Services.Students
             if (!DateTime.TryParse(row["DateInscription"], out dateInscription))
                 dateInscription = DateTime.UtcNow;
 
-            // Mot de passe
-            string password = string.IsNullOrWhiteSpace(row["MotDePasse"])
-                ? "Changeme@2025"
-                : row["MotDePasse"];
+            // Mot de passe par défaut
+            string password = "Changeme@2025";
             string hashedPassword = BCrypt.Net.BCrypt.HashPassword(password);
 
-            // Matricule auto
-            string matricule = string.IsNullOrWhiteSpace(row["Matricule"])
-                ? GenerateMatricule(dateInscription, row["Niveau"], row["Cycle"])
-                : row["Matricule"];
+            // Récupérer les entités Cycle, Niveau et Specialite
+            var cycle = await _context.Cycles.FindAsync(cycleId);
+            var niveau = await _context.Niveaux.FindAsync(niveauId);
+            var specialite = await _context.Specialites.FindAsync(specialiteId);
+            
+            // Matricule auto avec gestion des valeurs nulles
+            string matricule = GenerateMatricule(
+                dateInscription, 
+                niveau?.NomNiveau ?? "X", 
+                cycle?.NomCycle ?? "X"
+            );
 
-            // Récupérer ou créer les entités liées
-            var cycle = await GetOrCreateCycleAsync(row["Cycle"]);
-            var niveau = await GetOrCreateNiveauAsync(row["Niveau"]);
-            var specialite = await GetOrCreateSpecialiteAsync(row["Specialite"]);
+            // Rôle par défaut : Étudiant
+            var roleEtudiant = await _context.Roles.FirstOrDefaultAsync(r => r.Nom == "Étudiant");
 
-            return new Etudiant
+            // Créer l'étudiant
+            var etudiant = new Etudiant
             {
                 Username = username,
                 MotDePasseHash = hashedPassword,
@@ -224,36 +213,20 @@ namespace PGSA_Licence3.Services.Students
                 Prenom = prenomComplet, // conserve le prénom complet
                 Telephone = row["Telephone"],
                 Matricule = matricule,
-                CycleId = cycle.Id,
-                NiveauId = niveau.Id,
-                SpecialiteId = specialite.Id,
+                CycleId = cycleId,
+                NiveauId = niveauId,
+                SpecialiteId = specialiteId,
                 EmailInstitutionnel = emailInstitutionnel,
                 DateInscription = dateInscription,
-            
             };
-        }
-
-        /// Importe une liste d'étudiants depuis un fichier Excel
-        public async Task<List<Etudiant>> ImportStudentsFromExcelAsync(Stream fileStream)
-        {
-            var studentData = ImportExcel(fileStream);
-            var students = new List<Etudiant>();
-
-            foreach (var row in studentData)
+            
+            // Ajouter le rôle étudiant à la collection de rôles
+            if (roleEtudiant != null)
             {
-                try
-                {
-                    var etudiant = await ToEtudiantAsync(row);
-                    students.Add(etudiant);
-                }
-                catch (Exception ex)
-                {
-                    // Gérer les erreurs d'importation
-                    Console.WriteLine($"Erreur lors de l'importation de l'étudiant {row["Matricule"]}: {ex.Message}");
-                }
+                etudiant.Roles = new List<Role> { roleEtudiant };
             }
 
-            return students;
+            return etudiant;
         }
     }
 }

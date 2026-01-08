@@ -3,9 +3,10 @@
     ViewData["Title"] = "Validation des Séances";
     Layout = "_DashboardLayout";
     
-    // Déterminer le rôle de l'utilisateur pour l'utiliser en JavaScript
+    // Déterminer le rôle de l'utilisateur pour l'utiliser en JavaScript et dans la vue
     bool isEnseignant = User.IsInRole("Enseignant");
     bool isDelegue = User.IsInRole("Délégué");
+    bool isAdministrateur = User.IsInRole("Administrateur");
 }
 
 <!-- Formulaire pour le token CSRF -->
@@ -33,8 +34,16 @@
                             <th>Cours</th>
                             <th>Date et heure</th>
                             <th>Salle</th>
-                            <th>Validation Enseignant</th>
-                            <th>Validation Délégué</th>
+                            @* Conditionnellement afficher la colonne "Validation Enseignant" *@
+                            @if (!isDelegue)
+                            {
+                                <th>Validation Enseignant</th>
+                            }
+                            @* Conditionnellement afficher la colonne "Validation Délégué" *@
+                            @if (!isEnseignant)
+                            {
+                                <th>Validation Délégué</th>
+                            }
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -50,28 +59,39 @@
                                 <td>@seance.Cours?.Nom</td>
                                 <td>@seance.DateHeureDebut.ToString("dd/MM/yyyy HH:mm")</td>
                                 <td>@seance.Salle</td>
-                                <td>
-                                    @if (validationEnseignant != null)
-                                    {
-                                        <span class="badge bg-@(validationEnseignant.Statut == StatutValidation.Validee ? "success" : "danger")">@(validationEnseignant.Statut == StatutValidation.Validee ? "Validée" : "Rejetée")</span>
-                                        <br /><small class="text-muted">par @validationEnseignant.Validateur?.Prenom @validationEnseignant.Validateur?.Nom</small>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge bg-warning">En attente</span>
-                                    }
-                                </td>
-                                <td>
-                                    @if (validationDelegue != null)
-                                    {
-                                        <span class="badge bg-@(validationDelegue.Statut == StatutValidation.Validee ? "success" : "danger")">@(validationDelegue.Statut == StatutValidation.Validee ? "Validée" : "Rejetée")</span>
-                                        <br /><small class="text-muted">par @validationDelegue.Validateur?.Prenom @validationDelegue.Validateur?.Nom</small>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge bg-warning">En attente</span>
-                                    }
-                                </td>
+                                
+                                @* Conditionnellement afficher la cellule "Validation Enseignant" *@
+                                @if (!isDelegue)
+                                {
+                                    <td>
+                                        @if (validationEnseignant != null)
+                                        {
+                                            <span class="badge bg-@(validationEnseignant.Statut == StatutValidation.Validee ? "success" : "danger")">@(validationEnseignant.Statut == StatutValidation.Validee ? "Validée" : "Rejetée")</span>
+                                            <br /><small class="text-muted">par @validationEnseignant.Validateur?.Prenom @validationEnseignant.Validateur?.Nom</small>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning">En attente</span>
+                                        }
+                                    </td>
+                                }
+                                
+                                @* Conditionnellement afficher la cellule "Validation Délégué" *@
+                                @if (!isEnseignant)
+                                {
+                                    <td>
+                                        @if (validationDelegue != null)
+                                        {
+                                            <span class="badge bg-@(validationDelegue.Statut == StatutValidation.Validee ? "success" : "danger")">@(validationDelegue.Statut == StatutValidation.Validee ? "Validée" : "Rejetée")</span>
+                                            <br /><small class="text-muted">par @validationDelegue.Validateur?.Prenom @validationDelegue.Validateur?.Nom</small>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning">En attente</span>
+                                        }
+                                    </td>
+                                }
+                                
                                 <td>
                                     @if (canValidateEnseignant || canValidateDelegue)
                                     {
@@ -125,9 +145,29 @@
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // CORRIGÉ: Définir les variables de rôle pour JavaScript
+            // Définir les variables de rôle pour JavaScript
             const isEnseignant = @(isEnseignant ? "true" : "false");
             const isDelegue = @(isDelegue ? "true" : "false");
+            const isAdministrateur = @(isAdministrateur ? "true" : "false");
+            
+            // Déterminer l'index de la colonne de validation selon le rôle
+            // 0: Cours, 1: Date, 2: Salle, 3: Validation Enseignant, 4: Validation Délégué, 5: Actions
+            let validationColumnIndex;
+            if (isEnseignant) {
+                validationColumnIndex = 3; // Colonne "Validation Enseignant"
+            } else if (isDelegue) {
+                validationColumnIndex = 3; // Colonne "Validation Délégué" (décalée car la colonne enseignant est masquée)
+            } else { // Administrateur
+                validationColumnIndex = isEnseignant ? 3 : 4; // Utiliser la logique appropriée
+            }
+            
+            // Déterminer l'index de la colonne des actions
+            let actionsColumnIndex;
+            if (isEnseignant || isDelegue) {
+                actionsColumnIndex = 4; // 4 colonnes visibles + actions
+            } else { // Administrateur
+                actionsColumnIndex = 5; // 5 colonnes visibles + actions
+            }
             
             const validationButtons = document.querySelectorAll('.validation-btn');
             const validationModal = new bootstrap.Modal(document.getElementById('validationModal'));
@@ -152,7 +192,7 @@
             async function performValidation(action) {
                 if (!currentSeanceId) return;
 
-                // CORRIGÉ: Utiliser les valeurs d'énumération correctes
+                // Utiliser les valeurs d'énumération correctes
                 const statut = action === 'valider' ? 1 : 2; // 1 = Validee, 2 = Rejetee
                 const commentaire = document.getElementById('commentaireValidation').value;
                 const row = document.querySelector(`tr[data-seance-id="${currentSeanceId}"]`);
@@ -163,7 +203,7 @@
                 validationModal.hide();
 
                 try {
-                    // CORRIGÉ: Créer l'objet de données correctement
+                    // Créer l'objet de données correctement
                     const requestData = {
                         seanceId: parseInt(currentSeanceId),
                         statut: statut,
@@ -191,17 +231,16 @@
                     console.log('Réponse du serveur:', result);
 
                     if (result.success) {
-                        // CORRIGÉ: Utiliser les variables JavaScript au lieu de l'objet User
-                        const validationColumnIndex = isEnseignant ? 3 : 4;
+                        // Utiliser l'index de colonne calculé précédemment
                         const validationCell = row.cells[validationColumnIndex];
                         
-                        // CORRIGÉ: Utiliser la valeur numérique renvoyée par le serveur
+                        // Utiliser la valeur numérique renvoyée par le serveur
                         const statutValue = result.statutValue || (result.statut === 'Validee' ? 1 : 2);
                         const badgeColor = statutValue === 1 ? 'success' : 'danger';
                         const badgeText = statutValue === 1 ? 'Validée' : 'Rejetée';
                         
                         validationCell.innerHTML = `<span class="badge bg-${badgeColor}">${badgeText}</span><br /><small class="text-muted">par ${result.dateValidation}</small>`;
-                        row.cells[5].innerHTML = '<span class="text-muted">Déjà traité</span>';
+                        row.cells[actionsColumnIndex].innerHTML = '<span class="text-muted">Déjà traité</span>';
                         
                         showToast('Succès', result.message, 'success');
                     } else {

@@ -11,7 +11,7 @@ namespace PGSA_Licence3.Models
 {
     [Index(nameof(Username), IsUnique = true)]
     [Index(nameof(Email), IsUnique = true)]
-    public abstract class User
+    public  class User
     {
         [Key]
         public int Id { get; set; }

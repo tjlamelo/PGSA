@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 namespace PGSA_Licence3.Controllers.Shared
 {
     [Route("Profile")]
-    [Authorize] 
+    [Authorize]
     public class ProfileController : Controller
     {
         private readonly LoginService _loginService;
@@ -20,7 +20,7 @@ namespace PGSA_Licence3.Controllers.Shared
         {
             _logger = logger;
             _db = db;
-            _loginService = new LoginService(db); // instanciation manuelle
+            _loginService = new LoginService(db);
         }
 
         [HttpGet]
@@ -30,16 +30,18 @@ namespace PGSA_Licence3.Controllers.Shared
             if (email == null)
                 return RedirectToAction("Index", "Login");
 
-            var user = await _loginService.GetUserByEmailAsync(email);
+            // 🔹 Correction : On inclut les rôles directement lors de la récupération de l'utilisateur
+            // pour éviter une requête complexe sur _db.Roles qui fait planter MySQL
+            var user = await _db.Users
+                .Include(u => u.Roles)
+                .FirstOrDefaultAsync(u => u.Email == email);
+
             if (user == null)
                 return RedirectToAction("Index", "Login");
 
-            // Récupérer les rôles de l'utilisateur
-            var roles = await _db.Roles
-                .Where(r => r.Users.Any(u => u.Id == user.Id))
-                .ToListAsync();
+            // 🔹 On récupère les rôles depuis la navigation de l'utilisateur chargé
+            var roles = user.Roles?.ToList() ?? new List<Role>();
 
-            // Déterminer si c'est un étudiant ou un enseignant
             Etudiant? etudiant = null;
             Enseignant? enseignant = null;
 
@@ -53,28 +55,24 @@ namespace PGSA_Licence3.Controllers.Shared
 
             if (etudiant != null)
             {
-                // C'est un étudiant
                 ViewBag.UserType = "Etudiant";
                 ViewBag.Roles = roles;
                 return View("~/Views/User/Staff/Profile.cshtml", etudiant);
             }
-            else
-            {
-                // Essayer de récupérer en tant qu'enseignant
-                enseignant = await _db.Enseignants
-                    .Include(e => e.Cours)
-                    .FirstOrDefaultAsync(e => e.Id == user.Id);
+            
+            // Essayer de récupérer en tant qu'enseignant
+            enseignant = await _db.Enseignants
+                .Include(e => e.Cours)
+                .FirstOrDefaultAsync(e => e.Id == user.Id);
 
-                if (enseignant != null)
-                {
-                    // C'est un enseignant
-                    ViewBag.UserType = "Enseignant";
-                    ViewBag.Roles = roles;
-                    return View("~/Views/User/Staff/Profile.cshtml", enseignant);
-                }
+            if (enseignant != null)
+            {
+                ViewBag.UserType = "Enseignant";
+                ViewBag.Roles = roles;
+                return View("~/Views/User/Staff/Profile.cshtml", enseignant);
             }
 
-            // Si ce n'est ni un étudiant ni un enseignant, retourner l'utilisateur de base
+            // Cas par défaut
             ViewBag.UserType = "User";
             ViewBag.Roles = roles;
             return View("~/Views/User/Staff/Profile.cshtml", user);

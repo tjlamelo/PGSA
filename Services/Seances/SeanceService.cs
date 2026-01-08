@@ -12,12 +12,13 @@ namespace PGSA_Licence3.Services.Seances
         {
             _context = context;
         }
- 
+
         // Récupérer toutes les séances
         public async Task<List<Seance>> GetAllAsync()
         {
             return await _context.Seances
                 .Include(s => s.Cours)
+                .ThenInclude(c => c!.Enseignant)
                 .Include(s => s.Groupe)
                 .Include(s => s.Cycle)
                 .Include(s => s.Niveau)
@@ -25,11 +26,81 @@ namespace PGSA_Licence3.Services.Seances
                 .ToListAsync();
         }
 
+        // Récupérer les séances d'un enseignant spécifique
+        public async Task<List<Seance>> GetSeancesByEnseignantAsync(int enseignantId)
+        {
+            return await _context.Seances
+                .Include(s => s.Cours)
+                .ThenInclude(c => c!.Enseignant)
+                .Include(s => s.Groupe)
+                .Include(s => s.Cycle)
+                .Include(s => s.Niveau)
+                .Include(s => s.Specialite)
+                .Where(s => s.Cours != null && s.Cours.EnseignantId == enseignantId)
+                .ToListAsync();
+        }
+
+        // Récupérer les séances pour un étudiant délégué (selon sa classe)
+       // Récupérer les séances pour un étudiant délégué (selon sa classe)
+public async Task<List<Seance>> GetSeancesByDelegueAsync(int delegueId)
+{
+    // 1. Récupérer l'étudiant délégué avec ses groupes
+    var delegue = await _context.Etudiants
+        .Include(e => e.Groupes)
+        .FirstOrDefaultAsync(e => e.Id == delegueId);
+
+    if (delegue == null) return new List<Seance>();
+
+    // 2. FIX: Extraire les IDs des groupes dans une liste simple (List<int>)
+    // C'est cette étape qui permet à MySQL de traduire la requête correctement.
+    var idsGroupesDelegue = delegue.Groupes.Select(g => g.Id).ToList();
+
+    // 3. Récupérer les séances qui correspondent à la classe du délégué
+    return await _context.Seances
+        .Include(s => s.Cours)
+            .ThenInclude(c => c!.Enseignant)
+        .Include(s => s.Groupe)
+        .Include(s => s.Cycle)
+        .Include(s => s.Niveau)
+        .Include(s => s.Specialite)
+        .Where(s => 
+            (s.CycleId == delegue.CycleId) &&
+            (s.NiveauId == delegue.NiveauId) &&
+            (s.SpecialiteId == delegue.SpecialiteId) &&
+            // Utilisation de .Contains() sur la liste simple d'IDs
+            (s.GroupeId == null || idsGroupesDelegue.Contains(s.GroupeId.Value))
+        )
+        .OrderByDescending(s => s.DateHeureDebut) // Optionnel: trier par date
+        .ToListAsync();
+}
+
+        // Vérifier si un utilisateur est un enseignant
+        public async Task<bool> IsEnseignantAsync(int userId)
+        {
+            return await _context.Enseignants.AnyAsync(e => e.Id == userId);
+        }
+
+        // Vérifier si un utilisateur est un étudiant délégué
+        public async Task<bool> IsDelegueAsync(int userId)
+        {
+            // Vérifier si l'utilisateur est un étudiant
+            var isEtudiant = await _context.Etudiants.AnyAsync(e => e.Id == userId);
+            if (!isEtudiant) return false;
+            
+            // Vérifier si l'étudiant a le rôle de délégué
+            var user = await _context.Users
+                .Include(u => u.Roles)
+                .FirstOrDefaultAsync(u => u.Id == userId);
+                
+            return user?.Roles.Any(r => r.Nom == "Délégué") ?? false;
+        }
+
         // Récupérer une séance par Id
         public async Task<Seance?> GetByIdAsync(int id)
         {
             return await _context.Seances
                 .Include(s => s.Cours)
+                .ThenInclude(c => c!.Enseignant)
                 .Include(s => s.Groupe)
                 .Include(s => s.Cycle)
                 .Include(s => s.Niveau)
@@ -115,7 +186,7 @@ namespace PGSA_Licence3.Services.Seances
             {
                 var enseignantConflicts = await _context.Seances
                     .Where(s => s.Id != seance.Id && // ignorer la séance elle-même
-                               s.Cours != null && 
+                               s.Cours != null &&
                                s.Cours.EnseignantId == seance.Cours.EnseignantId && // même enseignant
                                s.Statut != StatutSeance.Annulee && // séance non annulée
                                (
@@ -150,13 +221,20 @@ namespace PGSA_Licence3.Services.Seances
             return conflicts;
         }
 
-        // Récupérer les cours pour liste déroulante
-        public async Task<List<Cours>> GetCoursAsync()
+        // Récupérer les cours pour liste déroulante (modifié pour filtrer par enseignant)
+        public async Task<List<Cours>> GetCoursAsync(int? enseignantId = null)
         {
-            return await _context.Cours
+            var query = _context.Cours
                 .Include(c => c.Enseignant)
-                .OrderBy(c => c.Nom)
-                .ToListAsync();
+                .AsQueryable();
+
+            // Si un ID d'enseignant est fourni, filtrer les cours pour cet enseignant
+            if (enseignantId.HasValue)
+            {
+                query = query.Where(c => c.EnseignantId == enseignantId.Value);
+            }
+
+            return await query.OrderBy(c => c.Nom).ToListAsync();
         }
 
         // Récupérer les groupes pour liste déroulante
@@ -165,29 +243,82 @@ namespace PGSA_Licence3.Services.Seances
             return await _context.Groupes.OrderBy(g => g.Nom).ToListAsync();
         }
 
-        // Récupérer les cycles pour liste déroulante
-        public async Task<List<Cycle>> GetCyclesAsync()
+        // Récupérer les cycles pour liste déroulante (modifié pour filtrer par enseignant)
+        public async Task<List<Cycle>> GetCyclesAsync(int? enseignantId = null)
         {
+            if (enseignantId.HasValue)
+            {
+                // Récupérer les cycles où l'enseignant dispense des cours
+                var cyclesIds = await _context.Cours
+                    .Where(c => c.EnseignantId == enseignantId.Value)
+                    .SelectMany(c => _context.Seances
+                        .Where(s => s.CoursId == c.Id && s.CycleId.HasValue)
+                        .Select(s => s.CycleId.Value))
+                    .Distinct()
+                    .ToListAsync();
+
+                return await _context.Cycles
+                    .Where(c => cyclesIds.Contains(c.Id))
+                    .OrderBy(c => c.NomCycle)
+                    .ToListAsync();
+            }
+            
+            // Sinon, récupérer tous les cycles
             return await _context.Cycles.OrderBy(c => c.NomCycle).ToListAsync();
         }
 
-        // Récupérer les niveaux pour liste déroulante
-        public async Task<List<Niveau>> GetNiveauxAsync()
+        // Récupérer les niveaux pour liste déroulante (modifié pour filtrer par enseignant)
+        public async Task<List<Niveau>> GetNiveauxAsync(int? enseignantId = null)
         {
+            if (enseignantId.HasValue)
+            {
+                // Récupérer les niveaux où l'enseignant dispense des cours
+                var niveauxIds = await _context.Cours
+                    .Where(c => c.EnseignantId == enseignantId.Value)
+                    .SelectMany(c => _context.Seances
+                        .Where(s => s.CoursId == c.Id && s.NiveauId.HasValue)
+                        .Select(s => s.NiveauId.Value))
+                    .Distinct()
+                    .ToListAsync();
+
+                return await _context.Niveaux
+                    .Where(n => niveauxIds.Contains(n.Id))
+                    .OrderBy(n => n.NomNiveau)
+                    .ToListAsync();
+            }
+            
+            // Sinon, récupérer tous les niveaux
             return await _context.Niveaux.OrderBy(n => n.NomNiveau).ToListAsync();
         }
 
-        // Récupérer les spécialités pour liste déroulante
-        public async Task<List<Specialite>> GetSpecialitesAsync()
+        // Récupérer les spécialités pour liste déroulante (modifié pour filtrer par enseignant)
+        public async Task<List<Specialite>> GetSpecialitesAsync(int? enseignantId = null)
         {
+            if (enseignantId.HasValue)
+            {
+                // Récupérer les spécialités où l'enseignant dispense des cours
+                var specialitesIds = await _context.Cours
+                    .Where(c => c.EnseignantId == enseignantId.Value)
+                    .SelectMany(c => _context.Seances
+                        .Where(s => s.CoursId == c.Id && s.SpecialiteId.HasValue)
+                        .Select(s => s.SpecialiteId.Value))
+                    .Distinct()
+                    .ToListAsync();
+
+                return await _context.Specialites
+                    .Where(s => specialitesIds.Contains(s.Id))
+                    .OrderBy(s => s.NomSpecialite)
+                    .ToListAsync();
+            }
+            
+            // Sinon, récupérer toutes les spécialités
             return await _context.Specialites.OrderBy(s => s.NomSpecialite).ToListAsync();
         }
 
         // Récupérer les salles disponibles
-        public async Task<List<string>> GetSallesAsync()
+        public Task<List<string>> GetSallesAsync()
         {
-            // Vous pouvez remplacer cette liste par une table de salles dans votre base de données
-            return new List<string>
+            var salles = new List<string>
             {
                 "A101", "A102", "A201", "A202", "A301", "A302",
                 "B101", "B102", "B201", "B202", "B301", "B302",
@@ -196,6 +327,8 @@ namespace PGSA_Licence3.Services.Seances
                 "Labo Physique 1", "Labo Physique 2",
                 "Labo Chimie 1", "Labo Chimie 2"
             };
+
+            return Task.FromResult(salles);
         }
     }
 }

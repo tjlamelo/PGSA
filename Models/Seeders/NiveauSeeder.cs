@@ -13,10 +13,10 @@ namespace PGSA_Licence3.Models.Seeders
                 var niveaux = new List<Niveau>
                 {
                     new Niveau { NomNiveau = "1" },
-                    new Niveau { NomNiveau = "2" },
-                    new Niveau { NomNiveau = "3" },
+                    new Niveau { NomNiveau = "2" }, //max Master
+                    new Niveau { NomNiveau = "3" }, // max Licence
                     new Niveau { NomNiveau = "4" },
-                    new Niveau { NomNiveau = "5" }
+                    new Niveau { NomNiveau = "5" } // max ingenieur
                 };
 
                 context.Niveaux.AddRange(niveaux);
